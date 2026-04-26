@@ -66,7 +66,7 @@ Available scripts:
 
 ### Main Screen
 
-![Desktop UI](./ui-now-desktop.png)
+![Desktop UI (English)](./docs/readme/ui-now-desktop-en.png)
 
 - Top area
   - Language selector and theme selector
@@ -83,7 +83,7 @@ Available scripts:
 
 ### Mobile View
 
-![Mobile UI](./ui-now-mobile.png)
+![Mobile UI (English)](./docs/readme/ui-now-mobile-en.png)
 
 - On narrow screens, the search panel collapses above the result area.
 - The result table can be viewed with horizontal scrolling.

@@ -66,7 +66,7 @@ http://127.0.0.1:6080
 
 ### メイン画面
 
-![Desktop UI](./ui-now-desktop.png)
+![Desktop UI (Japanese)](./docs/readme/ui-now-desktop-ja.png)
 
 - 画面上部
   - 言語切り替えとテーマ切り替えがあります。
@@ -83,7 +83,7 @@ http://127.0.0.1:6080
 
 ### モバイル表示
 
-![Mobile UI](./ui-now-mobile.png)
+![Mobile UI (Japanese)](./docs/readme/ui-now-mobile-ja.png)
 
 - 画面幅が狭いと検索メニューは上部に折りたたみ表示されます。
 - 結果テーブルは横スクロールで確認できます。
