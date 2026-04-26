@@ -101,3 +101,31 @@ http://127.0.0.1:6080
 - 外部ライブラリは CDN 読み込みです。
 - API 結果はローカルキャッシュされます。
 - 詳細仕様は [Specs.md](./Specs.md) を参照してください。
+
+## 参考・謝辞
+
+- OCR 補助UIとブラウザ内でOCR候補を扱う体験の整理にあたって、[ogwata/ndlocr-lite-web-ai](https://github.com/ogwata/ndlocr-lite-web-ai) を参考にしています。
+- このプロジェクトの OCR 機能は外部ライブラリに依存しており、それぞれの著作権およびライセンスは各ライブラリの条件に従います。
+- 参考元の `ogwata/ndlocr-lite-web-ai` リポジトリでは、README 上でデュアルライセンス（CC BY 4.0 + MIT）が案内されています。
+
+## 外部依存ライセンス
+
+このプロジェクトでブラウザから読み込む主要な外部ライブラリと、確認時点のライセンス情報は次のとおりです。
+
+| ライブラリ | 利用バージョン | 用途 | ライセンス | 参照先 |
+| --- | --- | --- | --- | --- |
+| Bulma | 1.0.4 | UI CSS フレームワーク | MIT | [jgthms/bulma](https://github.com/jgthms/bulma) |
+| multiple-select | 2.3.0 | 複数選択UI | MIT | [wenzhixin/multiple-select](https://github.com/wenzhixin/multiple-select) |
+| jQuery | 3.7.1 | DOM 操作とプラグイン基盤 | MIT | [jQuery License](https://jquery.com/license/) |
+| Axios | 1.8.4 | HTTP クライアント | MIT | [axios/axios](https://github.com/axios/axios) |
+| fuzzysort | 3.1.0 | クライアント側あいまい検索 | MIT | [farzher/fuzzysort](https://github.com/farzher/fuzzysort) |
+| Tesseract.js | 6.x | OCR 実行 | Apache-2.0 | [naptha/tesseract.js](https://github.com/naptha/tesseract.js) |
+| html2canvas | 1.4.1 | 表示中テーブルの画像出力 | MIT | [niklasvh/html2canvas](https://github.com/niklasvh/html2canvas) |
+
+## ライセンス
+
+このリポジトリは [MIT License](./LICENSE) のもとで公開しています。
+
+- ただし、CDN 経由で読み込む外部ライブラリや OCR 関連ライブラリは、このリポジトリとは別のライセンスで提供されます。
+- 利用時は、必要に応じて各依存ライブラリのライセンスも確認してください。
+- 上の一覧は 2026-04-26 時点で、各公式サイト・公式リポジトリの表記をもとに確認したものです。

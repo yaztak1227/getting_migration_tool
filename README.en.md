@@ -101,3 +101,31 @@ Available scripts:
 - External libraries are loaded from CDNs.
 - API responses are cached locally.
 - See [Specs.md](./Specs.md) for the full current specification.
+
+## Acknowledgements
+
+- The OCR helper flow and the browser-first OCR user experience in this project were developed with reference to [ogwata/ndlocr-lite-web-ai](https://github.com/ogwata/ndlocr-lite-web-ai).
+- The OCR feature in this project depends on third-party libraries, and each dependency remains subject to its own copyright and license terms.
+- The `ogwata/ndlocr-lite-web-ai` repository states in its README that it uses a dual-license approach (CC BY 4.0 + MIT).
+
+## Third-Party Licenses
+
+The main third-party libraries loaded by this project in the browser, together with the license information confirmed at the time of writing, are listed below.
+
+| Library | Version Used Here | Purpose | License | Reference |
+| --- | --- | --- | --- | --- |
+| Bulma | 1.0.4 | UI CSS framework | MIT | [jgthms/bulma](https://github.com/jgthms/bulma) |
+| multiple-select | 2.3.0 | multi-select UI control | MIT | [wenzhixin/multiple-select](https://github.com/wenzhixin/multiple-select) |
+| jQuery | 3.7.1 | DOM utilities and plugin base | MIT | [jQuery License](https://jquery.com/license/) |
+| Axios | 1.8.4 | HTTP client | MIT | [axios/axios](https://github.com/axios/axios) |
+| fuzzysort | 3.1.0 | client-side fuzzy search | MIT | [farzher/fuzzysort](https://github.com/farzher/fuzzysort) |
+| Tesseract.js | 6.x | OCR runtime | Apache-2.0 | [naptha/tesseract.js](https://github.com/naptha/tesseract.js) |
+| html2canvas | 1.4.1 | table image export | MIT | [niklasvh/html2canvas](https://github.com/niklasvh/html2canvas) |
+
+## License
+
+This repository is released under the [MIT License](./LICENSE).
+
+- External libraries loaded from CDNs, including OCR-related libraries, are distributed under their own licenses.
+- Please review the licenses of those dependencies as needed for your use case.
+- The table above reflects the license notices published by the official sites or repositories as checked on 2026-04-26.
