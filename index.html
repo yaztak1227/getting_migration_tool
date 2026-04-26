@@ -33,7 +33,11 @@
             </div>
           </div>
           <div class="header-theme-select">
-            <label class="header-theme-label" for="themeSelect">Theme</label>
+            <label id="languageLabel" class="header-theme-label" for="languageSelect">Language</label>
+            <div class="select is-small">
+              <select id="languageSelect" aria-label="Language"></select>
+            </div>
+            <label id="themeLabel" class="header-theme-label" for="themeSelect">Theme</label>
             <div class="select is-small">
               <select id="themeSelect" aria-label="テーマ選択"></select>
             </div>
@@ -312,7 +316,7 @@
                 <div id="resultMeta" class="box result-box" hidden>
                   <div class="result-toolbar">
                     <div>
-                      <p class="heading mb-2">取得件数 / 表示状況</p>
+                      <p id="resultMetaHeading" class="heading mb-2">取得件数 / 表示状況</p>
                       <strong id="filteredCount">0件</strong>
                     </div>
                     <div class="pager-actions">
@@ -335,26 +339,26 @@
                       <tr>
                         <th id="sortKingdomHeader" scope="col" aria-sort="none">
                           <button class="sort-button" type="button" data-sort-key="kingdomId">
-                            <span>王国番号</span>
+                            <span id="sortKingdomLabel">王国番号</span>
                             <span class="sort-indicator" aria-hidden="true">-</span>
                           </button>
                         </th>
                         <th id="sortScrollHeader" scope="col" aria-sort="none">
                           <button class="sort-button" type="button" data-sort-key="num">
-                            <span>必要巻物</span>
+                            <span id="sortScrollLabel">必要巻物</span>
                             <span class="sort-indicator" aria-hidden="true">-</span>
                           </button>
                         </th>
                         <th id="sortStatusHeader" scope="col" aria-sort="none">
                           <button class="sort-button" type="button" data-sort-key="status">
-                            <span>王国状態</span>
+                            <span id="sortStatusLabel">王国状態</span>
                             <span class="sort-indicator" aria-hidden="true">-</span>
                           </button>
                         </th>
                         <th id="sortRankHeader" scope="col" aria-sort="none">
                           <div class="sort-header-group">
                             <button class="sort-button" type="button" data-sort-key="rank">
-                              <span>ランク</span>
+                              <span id="sortRankLabel">ランク</span>
                               <span class="sort-indicator" aria-hidden="true">-</span>
                             </button>
                             <span class="header-tooltip">

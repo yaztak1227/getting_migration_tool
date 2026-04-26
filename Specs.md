@@ -33,6 +33,15 @@
 - Additional theme variables in `styles.css` control panel/table/status coloring.
 - Button colors use Bulma palette variables (`--bulma-*-soft`, `--bulma-*-bold`, `--bulma-*-invert`, `--bulma-*-dark`) to keep contrast readable across themes.
 
+## Language System (i18n)
+- Language is selected from a compact dropdown (`languageSelect`) in the header.
+- Supported languages: `ja` and `en`.
+- On first load, language defaults to browser preference (`ja*` => Japanese, otherwise English), then persists in `localStorage` key `lm_language_v1`.
+- UI labels, placeholders, button text, status/error messages, tooltip text, and runtime notice are switched via dictionary values in `app.js` (`TRANSLATIONS`).
+- Result/status date-time text uses locale-aware formatting (`ja-JP` / `en-US`) based on current language.
+- Kingdom status labels (`閑散/正常/混雑/過密` or `Quiet/Normal/Busy/Crowded`) are switched by language and used consistently in filter options and table rendering.
+- Existing cache/saved-list data schema is unchanged by language switching.
+
 ## Data Fetch and Cache
 - API call is POST `/api/migration` via local proxy.
 - Request defaults: `num=90`, `status=0`, `order=1`.
@@ -41,6 +50,7 @@
   - Primary: `localStorage` (`lm_migration_cache_store_v1`) by power key.
   - Compatibility: latest snapshot also written to cookie (`lm_migration_cache_v2`).
   - Saved kingdom filter lists: `localStorage` (`lm_saved_kingdom_lists_v1`) with `name`, `value`, `updatedAt`.
+  - Selected language: `localStorage` (`lm_language_v1`).
 - Behavior:
   - On load: restores latest valid cache.
   - On power select change: if matching cache exists, renders immediately.

@@ -7,6 +7,7 @@
     cookieMaxAgeSec: 60 * 60 * 24 * 7,
     cacheValidMs: 24 * 60 * 60 * 1000,
     themeStorageKey: "lm_theme_v1",
+    languageStorageKey: "lm_language_v1",
     savedKingdomListsStorageKey: "lm_saved_kingdom_lists_v1",
     pageSizeOptions: [30, 50, 100],
     themes: [
@@ -41,6 +42,8 @@
       3: "混雑",
       4: "過密",
     },
+    unknownStatusLabel: "不明",
+    listSortLocale: "ja",
     api: {
       url: "/api/migration",
       method: "POST",
@@ -58,9 +61,433 @@
     },
   };
 
+  const TRANSLATIONS = {
+    ja: {
+      title: "移民巻物枚数チェック",
+      headerTitle: "Lordsmobile 移民王国検索",
+      headerInfoButtonAria: "ツール説明",
+      headerInfoText:
+        "必要パワーごとの移民対象王国一覧を取得し、そのまま検索・絞り込み・ページ表示まで行えます。ローカルの Node.js プロキシ経由で API を取得します。",
+      languageLabel: "Language",
+      languageSelectAria: "言語選択",
+      languageOptionJa: "日本語",
+      languageOptionEn: "English",
+      themeLabel: "Theme",
+      themeSelectAria: "テーマ選択",
+      sideMenu: "検索メニュー",
+      search: "検索",
+      searchPlaceholder: "王国番号・状態・ランクで検索",
+      statusFilter: "王国状態",
+      statusFilterAria: "王国状態フィルタ",
+      statusFilterHelp: "複数選択可。未選択ならすべて表示します。ドロップダウン内でチェックして選べます。",
+      statusFilterPlaceholder: "王国状態を選択",
+      scrollRange: "必要巻物の範囲",
+      minPlaceholder: "最小",
+      maxPlaceholder: "最大",
+      pageSize: "表示件数",
+      pageSizeAria: "表示件数",
+      kingdomFilterLabel: "王国番号（範囲 or リスト）",
+      kingdomFilterPlaceholder: "例: 1200-1250 または 1201 1203 1207（カンマ/空白/タブ区切り）",
+      saveCurrentFilters: "現在の条件を保存",
+      saveNamePlaceholder: "保存名 例: 候補A",
+      saveFilter: "条件を保存",
+      savedListUse: "保存済みリストを使う",
+      savedListAria: "保存済み王国番号リスト",
+      savedListPlaceholder: "保存済みリストを選択",
+      load: "読み込む",
+      delete: "削除",
+      ocrFromImage: "画像から読み込む",
+      ocrNoteHtml:
+        '<a href="https://github.com/ogwata/ndlocr-lite-web-ai" target="_blank" rel="noopener noreferrer">ogwata/ndlocr-lite-web-ai</a> のようなブラウザ側OCRの体験を参考に、事前ダウンロード後に画像から王国番号候補を抽出できます。',
+      ocrExample: "画像例",
+      ocrExampleAlt: "王国番号OCR用の参考画像",
+      ocrModel: "OCRモデル",
+      ocrDownload: "OCRをダウンロード",
+      ocrImage: "OCR画像",
+      ocrRun: "OCR実行",
+      ocrRunButton: "画像をOCR",
+      ocrApply: "王国番号反映",
+      ocrApplyButton: "フィルタへ反映",
+      ocrInitStatus: "OCRは未準備です。先に「OCRをダウンロード」を押してください。",
+      ocrDetectedSummaryFallback: "抽出王国番号: -",
+      ocrResultText: "OCR結果テキスト",
+      ocrTextPlaceholder: "OCR結果がここに表示されます。",
+      resetFilters: "条件をリセット",
+      power: "必要パワー",
+      powerAria: "必要パワー",
+      fetch: "取得",
+      fetchButton: "取得する",
+      refetch: "更新",
+      refetchButton: "再取得",
+      resultMetaHeading: "取得件数 / 表示状況",
+      prevPage: "前へ",
+      nextPage: "次へ",
+      emptyState: "条件に一致する王国はありません。",
+      sortKingdom: "王国番号",
+      sortScroll: "必要巻物",
+      sortStatus: "王国状態",
+      sortRank: "ランク",
+      rankTooltipTriggerAria: "ランク0の説明を表示",
+      rankTooltip: "0はランク外です",
+      perPage: "{size}件ずつ",
+      cacheUnused: "キャッシュ未使用",
+      runtimeNotice:
+        "現在は <strong>file://</strong> で開かれています。{browser} での直接起動は制約が多いため、<strong>http://127.0.0.1:6080</strong> から開くと Node.js のローカルプロキシ経由で取得できます。",
+      unknownStatus: "不明",
+      unknownError: "不明なエラー",
+      unknownDate: "不明",
+      browserGeneric: "このブラウザ",
+      ocrAlreadyReady: "OCRはすでに利用可能です。画像を選んで実行してください。",
+      ocrPreparing: "OCRモデルを準備しています。初回は少し時間がかかります。",
+      ocrReady: "OCRの準備が完了しました。画像を選んでOCRできます。",
+      ocrTargetImages: "OCR対象画像: {count}枚選択中",
+      ocrNeedImage: "OCRする画像を1枚以上選択してください。",
+      ocrFileTooLarge: "画像サイズが大きすぎます。10MB以下の画像を選択してください: {name}",
+      ocrRunningCount: "OCRを実行しています... ({count}枚)",
+      ocrRunningProgress: "OCRを実行しています... ({index}/{total}: {name})",
+      ocrDetectedSummary: "抽出王国番号: {candidates}",
+      ocrDetectedNone: "抽出王国番号: 見つかりませんでした",
+      ocrDetectedDescription:
+        "{count}枚のOCR結果から 4〜5桁の数字を候補として抽出し、5桁は末尾4桁へ正規化しました。内容を確認してから反映してください。",
+      ocrDetectedDescriptionNone:
+        "OCRテキストは取得できましたが、王国番号らしい4〜5桁の候補は見つかりませんでした。",
+      ocrDone: "OCRが完了しました。{count}枚分の結果をまとめています。",
+      ocrNoCandidates: "反映できる王国番号候補がありません。",
+      ocrApplied: "OCRで抽出した王国番号候補をフィルタに反映しました。",
+      saveNameRequired: "保存名を入力してください。",
+      saveValueRequired: "保存する王国番号リストが空です。",
+      savedListSaved: "王国番号リスト「{name}」を保存しました。",
+      savedListLoadSelect: "読み込む保存済みリストを選択してください。",
+      savedListNotFound: "選択した保存済みリストが見つかりません。",
+      savedListLoaded: "王国番号リスト「{name}」を読み込みました。",
+      savedListDeleteSelect: "削除する保存済みリストを選択してください。",
+      savedListDeleted: "王国番号リスト「{name}」を削除しました。",
+      ocrPreparingProgress: "OCRモデル準備中: {status}{percent}",
+      ocrProcessingProgress: "OCR実行中: {prefix}{status}{percent}",
+      apiLoading: "APIからデータ取得中です...",
+      fetchedLatest: "最新データを取得しました。",
+      cacheFromApi: "参照元: API / 取得日時: {date}",
+      noPowerCache: "この必要パワーのキャッシュはありません。取得するボタンを押してください。",
+      noDisplayData: "表示可能なデータがありません。",
+      sortAriaLabel: "{label}を並び替え",
+      resultSummary: "取得: {fetched}件 / 絞り込み: {filtered}件 / 表示: {from}-{to}件",
+      fileOpenFetchError:
+        "{browser} で file:// から開いています。http://127.0.0.1:6080 から開き直してください。",
+      fetchFailed: "取得失敗: {message}",
+      fileOpenOcrError:
+        "{browser} で file:// から開いているため OCR ダウンロードに失敗した可能性があります。http://127.0.0.1:6080 から開き直してください。",
+      ocrFailed: "OCR失敗: {message}",
+      cacheUsed: "キャッシュを利用しました（{date} の取得結果）。",
+      statusLabels: {
+        1: "閑散",
+        2: "正常",
+        3: "混雑",
+        4: "過密",
+      },
+      ocrProgressDefaultDownload: "downloading",
+      ocrProgressDefaultProcessing: "processing",
+    },
+    en: {
+      title: "Migration Scroll Checker",
+      headerTitle: "Lordsmobile Migration Kingdom Search",
+      headerInfoButtonAria: "Tool description",
+      headerInfoText:
+        "Fetch migration target kingdoms by required power, then search, filter, and paginate in one screen. API data is retrieved through the local Node.js proxy.",
+      languageLabel: "Language",
+      languageSelectAria: "Language selector",
+      languageOptionJa: "Japanese",
+      languageOptionEn: "English",
+      themeLabel: "Theme",
+      themeSelectAria: "Theme selector",
+      sideMenu: "Search Menu",
+      search: "Search",
+      searchPlaceholder: "Search by kingdom, status, or rank",
+      statusFilter: "Kingdom Status",
+      statusFilterAria: "Kingdom status filter",
+      statusFilterHelp: "Multiple selection is available. If none are selected, all statuses are shown. Check statuses in the dropdown.",
+      statusFilterPlaceholder: "Select kingdom status",
+      scrollRange: "Scroll Range",
+      minPlaceholder: "Min",
+      maxPlaceholder: "Max",
+      pageSize: "Rows",
+      pageSizeAria: "Rows per page",
+      kingdomFilterLabel: "Kingdom IDs (Range or List)",
+      kingdomFilterPlaceholder: "Example: 1200-1250 or 1201 1203 1207 (comma/space/tab separated)",
+      saveCurrentFilters: "Save Current Filter",
+      saveNamePlaceholder: "Name e.g. Candidate A",
+      saveFilter: "Save Filter",
+      savedListUse: "Use Saved List",
+      savedListAria: "Saved kingdom list",
+      savedListPlaceholder: "Select a saved list",
+      load: "Load",
+      delete: "Delete",
+      ocrFromImage: "Load from Image",
+      ocrNoteHtml:
+        'Inspired by browser OCR experiences such as <a href="https://github.com/ogwata/ndlocr-lite-web-ai" target="_blank" rel="noopener noreferrer">ogwata/ndlocr-lite-web-ai</a>, this tool can extract kingdom candidates after pre-downloading OCR resources.',
+      ocrExample: "Example Image",
+      ocrExampleAlt: "Reference image for kingdom OCR",
+      ocrModel: "OCR Model",
+      ocrDownload: "Download OCR",
+      ocrImage: "OCR Images",
+      ocrRun: "Run OCR",
+      ocrRunButton: "Run OCR on Images",
+      ocrApply: "Apply IDs",
+      ocrApplyButton: "Apply to Filter",
+      ocrInitStatus: "OCR is not ready. Click \"Download OCR\" first.",
+      ocrDetectedSummaryFallback: "Detected Kingdom IDs: -",
+      ocrResultText: "OCR Result Text",
+      ocrTextPlaceholder: "OCR result text appears here.",
+      resetFilters: "Reset Filters",
+      power: "Required Power",
+      powerAria: "Required power",
+      fetch: "Fetch",
+      fetchButton: "Fetch Data",
+      refetch: "Refresh",
+      refetchButton: "Refetch",
+      resultMetaHeading: "Fetched / Filtered / Display",
+      prevPage: "Prev",
+      nextPage: "Next",
+      emptyState: "No kingdoms match the current filters.",
+      sortKingdom: "Kingdom ID",
+      sortScroll: "Required Scrolls",
+      sortStatus: "Status",
+      sortRank: "Rank",
+      rankTooltipTriggerAria: "Show rank 0 description",
+      rankTooltip: "0 means out of rank",
+      perPage: "{size} / page",
+      cacheUnused: "Cache not used",
+      runtimeNotice:
+        "You are currently opening this app via <strong>file://</strong>. Direct launch in {browser} has restrictions, so open from <strong>http://127.0.0.1:6080</strong> to fetch data through the local Node.js proxy.",
+      unknownStatus: "Unknown",
+      unknownError: "Unknown error",
+      unknownDate: "Unknown",
+      browserGeneric: "this browser",
+      ocrAlreadyReady: "OCR is already ready. Select images and run OCR.",
+      ocrPreparing: "Preparing OCR model. The first run may take a while.",
+      ocrReady: "OCR is ready. Select images to run OCR.",
+      ocrTargetImages: "OCR target images: {count} selected",
+      ocrNeedImage: "Select at least one image to run OCR.",
+      ocrFileTooLarge: "Image is too large. Select an image under 10MB: {name}",
+      ocrRunningCount: "Running OCR... ({count} images)",
+      ocrRunningProgress: "Running OCR... ({index}/{total}: {name})",
+      ocrDetectedSummary: "Detected Kingdom IDs: {candidates}",
+      ocrDetectedNone: "Detected Kingdom IDs: none",
+      ocrDetectedDescription:
+        "Extracted 4-5 digit number candidates from {count} OCR result images, and normalized 5-digit values to the last 4 digits. Verify before applying.",
+      ocrDetectedDescriptionNone:
+        "OCR text was extracted, but no 4-5 digit kingdom-like candidates were found.",
+      ocrDone: "OCR complete. Aggregated results from {count} images.",
+      ocrNoCandidates: "No kingdom candidates are available to apply.",
+      ocrApplied: "Applied OCR-detected kingdom candidates to the filter.",
+      saveNameRequired: "Enter a name to save.",
+      saveValueRequired: "The kingdom list to save is empty.",
+      savedListSaved: "Saved kingdom list \"{name}\".",
+      savedListLoadSelect: "Select a saved list to load.",
+      savedListNotFound: "The selected saved list was not found.",
+      savedListLoaded: "Loaded kingdom list \"{name}\".",
+      savedListDeleteSelect: "Select a saved list to delete.",
+      savedListDeleted: "Deleted kingdom list \"{name}\".",
+      ocrPreparingProgress: "Preparing OCR model: {status}{percent}",
+      ocrProcessingProgress: "OCR in progress: {prefix}{status}{percent}",
+      apiLoading: "Fetching data from API...",
+      fetchedLatest: "Fetched latest data.",
+      cacheFromApi: "Source: API / Fetched at: {date}",
+      noPowerCache: "No cache exists for this power. Click fetch.",
+      noDisplayData: "No displayable data is available.",
+      sortAriaLabel: "Sort by {label}",
+      resultSummary: "Fetched: {fetched} / Filtered: {filtered} / Display: {from}-{to}",
+      fileOpenFetchError:
+        "Opened with file:// in {browser}. Reopen from http://127.0.0.1:6080.",
+      fetchFailed: "Fetch failed: {message}",
+      fileOpenOcrError:
+        "Because this page is opened via file:// in {browser}, OCR download may fail. Reopen from http://127.0.0.1:6080.",
+      ocrFailed: "OCR failed: {message}",
+      cacheUsed: "Used cache (fetched at {date}).",
+      statusLabels: {
+        1: "Quiet",
+        2: "Normal",
+        3: "Busy",
+        4: "Crowded",
+      },
+      ocrProgressDefaultDownload: "downloading",
+      ocrProgressDefaultProcessing: "processing",
+    },
+  };
+
+  class I18nManager {
+    constructor(config, dom) {
+      this.config = config;
+      this.dom = dom;
+      this.lang = "ja";
+      this.onChange = null;
+    }
+
+    init(onChange) {
+      this.onChange = typeof onChange === "function" ? onChange : null;
+      this.initLanguageOptions();
+      const initial = this.readLanguage();
+      this.setLanguage(initial);
+      this.dom.languageSelect.addEventListener("change", () => this.setLanguage(this.dom.languageSelect.value));
+    }
+
+    initLanguageOptions() {
+      this.dom.languageSelect.innerHTML = "";
+      const options = [
+        { value: "ja", key: "languageOptionJa" },
+        { value: "en", key: "languageOptionEn" },
+      ];
+      for (const item of options) {
+        const option = document.createElement("option");
+        option.value = item.value;
+        option.textContent = this.t(item.key, {}, item.value);
+        this.dom.languageSelect.appendChild(option);
+      }
+    }
+
+    readLanguage() {
+      const saved = window.localStorage.getItem(this.config.languageStorageKey);
+      if (saved === "ja" || saved === "en") return saved;
+      const browserLang = String(navigator.language || "").toLowerCase();
+      return browserLang.startsWith("ja") ? "ja" : "en";
+    }
+
+    setLanguage(lang) {
+      this.lang = lang === "en" ? "en" : "ja";
+      this.dom.themeRoot.lang = this.lang;
+      this.dom.languageSelect.value = this.lang;
+      window.localStorage.setItem(this.config.languageStorageKey, this.lang);
+      this.initLanguageOptions();
+      this.dom.languageSelect.value = this.lang;
+      if (this.onChange) this.onChange(this.lang);
+    }
+
+    currentLanguage() {
+      return this.lang;
+    }
+
+    statusLabelMap() {
+      return this.dictionary().statusLabels || TRANSLATIONS.ja.statusLabels;
+    }
+
+    t(key, vars = {}, langOverride = null) {
+      const lang = langOverride || this.lang;
+      const dict = TRANSLATIONS[lang] || TRANSLATIONS.ja;
+      const template = key in dict ? dict[key] : TRANSLATIONS.ja[key];
+      if (typeof template !== "string") return "";
+      return this.format(template, vars);
+    }
+
+    applyStaticTexts() {
+      document.title = this.t("title");
+      this.setText(".header-left .title", "headerTitle");
+      this.setAttr("#headerInfoButton", "aria-label", "headerInfoButtonAria");
+      this.setHtml(".tooltip-card", "headerInfoText");
+      this.setText("#languageLabel", "languageLabel");
+      this.setAttr("#languageSelect", "aria-label", "languageSelectAria");
+      this.setText("#themeLabel", "themeLabel");
+      this.setAttr("#themeSelect", "aria-label", "themeSelectAria");
+      this.setText(".side-drawer-toggle", "sideMenu");
+      this.setText("label[for='searchInput']", "search");
+      this.setAttr("#searchInput", "placeholder", "searchPlaceholder");
+      this.setText("label[for='statusFilter']", "statusFilter");
+      this.setAttr("#statusFilter", "aria-label", "statusFilterAria");
+      this.setText(".status-filter-select + .help", "statusFilterHelp");
+      this.setText(".field > .label:not([for])", "scrollRange");
+      this.setAttr("#scrollMinInput", "placeholder", "minPlaceholder");
+      this.setAttr("#scrollMaxInput", "placeholder", "maxPlaceholder");
+      this.setText("label[for='pageSizeSelect']", "pageSize");
+      this.setAttr("#pageSizeSelect", "aria-label", "pageSizeAria");
+      this.setText("label[for='kingdomRangeListInput']", "kingdomFilterLabel");
+      this.setAttr("#kingdomRangeListInput", "placeholder", "kingdomFilterPlaceholder");
+      this.setText(".saved-kingdom-block .saved-kingdom-title", "saveCurrentFilters");
+      this.setAttr("#kingdomListNameInput", "placeholder", "saveNamePlaceholder");
+      this.setText("#saveKingdomListButton", "saveFilter");
+      this.setText(".saved-kingdom-block.mt-3 .saved-kingdom-title", "savedListUse");
+      this.setAttr("#savedKingdomListSelect", "aria-label", "savedListAria");
+      this.setText("#loadKingdomListButton", "load");
+      this.setText("#deleteKingdomListButton", "delete");
+      this.setText(".ocr-details-title", "ocrFromImage");
+      this.setHtml(".ocr-panel-note", "ocrNoteHtml");
+      this.setText(".ocr-example-trigger", "ocrExample");
+      this.setAttr(".ocr-example-image", "alt", "ocrExampleAlt");
+      this.setText("label[for='ocrPrepareButton']", "ocrModel");
+      this.setText("#ocrPrepareButton", "ocrDownload");
+      this.setText("label[for='ocrImageInput']", "ocrImage");
+      this.setText("label[for='ocrRunButton']", "ocrRun");
+      this.setText("#ocrRunButton", "ocrRunButton");
+      this.setText("label[for='ocrApplyButton']", "ocrApply");
+      this.setText("#ocrApplyButton", "ocrApplyButton");
+      this.setText("#ocrStatus .message-body", "ocrInitStatus");
+      this.setText("#ocrDetectedSummary", "ocrDetectedSummaryFallback");
+      this.setText("label[for='ocrTextOutput']", "ocrResultText");
+      this.setAttr("#ocrTextOutput", "placeholder", "ocrTextPlaceholder");
+      this.setText("#resetFiltersButton", "resetFilters");
+      this.setText("label[for='powerSelect']", "power");
+      this.setAttr("#powerSelect", "aria-label", "powerAria");
+      this.setText("label[for='fetchButton']", "fetch");
+      this.setText("#fetchButton", "fetchButton");
+      this.setText("label[for='refetchButton']", "refetch");
+      this.setText("#refetchButton", "refetchButton");
+      this.setText("#resultMetaHeading", "resultMetaHeading");
+      this.setText("#prevPageButton", "prevPage");
+      this.setText("#nextPageButton", "nextPage");
+      this.setText("#emptyState .message-body", "emptyState");
+      this.setText("#sortKingdomLabel", "sortKingdom");
+      this.setText("#sortScrollLabel", "sortScroll");
+      this.setText("#sortStatusLabel", "sortStatus");
+      this.setText("#sortRankLabel", "sortRank");
+      this.setAttr(".header-tooltip-trigger", "aria-label", "rankTooltipTriggerAria");
+      this.setText("#rankZeroTooltip", "rankTooltip");
+    }
+
+    formatDateTime(isoLike) {
+      const date = new Date(isoLike);
+      if (Number.isNaN(date.getTime())) return this.t("unknownDate");
+      const locale = this.lang === "en" ? "en-US" : "ja-JP";
+      return date.toLocaleString(locale, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+    }
+
+    dictionary() {
+      return TRANSLATIONS[this.lang] || TRANSLATIONS.ja;
+    }
+
+    format(template, vars) {
+      return String(template).replace(/\{(\w+)\}/g, (_, key) =>
+        Object.prototype.hasOwnProperty.call(vars, key) ? String(vars[key]) : `{${key}}`
+      );
+    }
+
+    setText(selector, key) {
+      const element = document.querySelector(selector);
+      if (!element) return;
+      element.textContent = this.t(key);
+    }
+
+    setHtml(selector, key) {
+      const element = document.querySelector(selector);
+      if (!element) return;
+      element.innerHTML = this.t(key);
+    }
+
+    setAttr(selector, attr, key) {
+      const element = document.querySelector(selector);
+      if (!element) return;
+      element.setAttribute(attr, this.t(key));
+    }
+  }
+
   class DomRefs {
     constructor() {
       this.themeRoot = document.documentElement;
+      this.languageSelect = document.getElementById("languageSelect");
       this.themeSelect = document.getElementById("themeSelect");
       this.powerSelect = document.getElementById("powerSelect");
       this.fetchButton = document.getElementById("fetchButton");
@@ -348,7 +775,7 @@
             updatedAt: String(item.updatedAt || ""),
           }))
           .filter((item) => item.name && item.value)
-          .sort((a, b) => a.name.localeCompare(b.name, "ja"));
+          .sort((a, b) => a.name.localeCompare(b.name, this.config.listSortLocale));
       } catch (error) {
         console.warn("saved kingdom list parse error", error);
         return [];
@@ -393,7 +820,7 @@
 
     async fetchKingdomList(power) {
       if (!window.axios) {
-        throw new Error("axiosの読み込みに失敗しました。ネットワーク接続を確認してください。");
+        throw new Error("axios failed to load. Please check your network connection.");
       }
 
       const response = await window.axios({
@@ -411,7 +838,7 @@
       }).then((res) => res.data);
 
       if (response && typeof response === "object" && Number(response.code) !== 0) {
-        throw new Error(response.msg || `APIエラー(code=${response.code})`);
+        throw new Error(response.msg || `API error (code=${response.code})`);
       }
 
       return this.extractList(response);
@@ -454,7 +881,7 @@
       }
 
       if (!window.Tesseract || typeof window.Tesseract.createWorker !== "function") {
-        throw new Error("Tesseract.js の読み込みに失敗しました。");
+        throw new Error("Tesseract.js failed to load.");
       }
 
       this.progressHandler = onProgress;
@@ -565,7 +992,7 @@
     }
 
     statusLabel(value) {
-      return this.config.statusLabelMap[value] || "不明";
+      return this.config.statusLabelMap[value] || this.config.unknownStatusLabel;
     }
 
     normalizePageSize(value) {
@@ -660,6 +1087,7 @@
     constructor(config) {
       this.config = config;
       this.dom = new DomRefs();
+      this.i18n = new I18nManager(config, this.dom);
       this.themeManager = new ThemeManager(config, this.dom);
       this.cacheStore = new CacheStore(config);
       this.savedKingdomLists = new SavedKingdomListStore(config);
@@ -685,16 +1113,43 @@
     }
 
     boot() {
+      this.i18n.init(() => this.handleLanguageChange());
       this.themeManager.init();
       this.initPowerOptions();
       this.initFilterOptions();
       this.initStatusFilterUi();
       this.renderSavedKingdomLists();
       this.bindEvents();
-      this.setCacheInfo("キャッシュ未使用");
+      this.setCacheInfo(this.t("cacheUnused"));
       this.renderRuntimeNotice();
       this.updateOcrControls();
       this.restoreFromCacheOnLoad();
+    }
+
+    t(key, vars = {}) {
+      return this.i18n.t(key, vars);
+    }
+
+    handleLanguageChange() {
+      this.config.statusLabelMap = this.i18n.statusLabelMap();
+      this.config.unknownStatusLabel = this.t("unknownStatus");
+      this.config.listSortLocale = this.i18n.currentLanguage() === "en" ? "en" : "ja";
+      this.i18n.applyStaticTexts();
+      this.initFilterOptions();
+      this.initStatusFilterUi();
+      this.renderSavedKingdomLists(this.dom.savedKingdomListSelect.value);
+      if (this.state.kingdomList.length > 0) {
+        this.rerender();
+      } else {
+        this.setCacheInfo(this.t("cacheUnused"));
+        this.dom.filteredCount.textContent = this.t("resultSummary", {
+          fetched: "0",
+          filtered: "0",
+          from: "0",
+          to: "0",
+        });
+      }
+      this.renderRuntimeNotice();
     }
 
     initPowerOptions() {
@@ -709,6 +1164,9 @@
     }
 
     initFilterOptions() {
+      this.dom.statusFilter.innerHTML = "";
+      this.dom.pageSizeSelect.innerHTML = "";
+
       const statusFragment = document.createDocumentFragment();
       for (const [value, label] of Object.entries(this.config.statusLabelMap)) {
         const option = document.createElement("option");
@@ -721,7 +1179,7 @@
       for (const size of this.config.pageSizeOptions) {
         const option = document.createElement("option");
         option.value = String(size);
-        option.textContent = `${size}件ずつ`;
+        option.textContent = this.t("perPage", { size });
         pageSizeFragment.appendChild(option);
       }
 
@@ -736,11 +1194,16 @@
         return;
       }
 
+      if (this.state.statusFilterUiReady) {
+        window.jQuery(this.dom.statusFilter).multipleSelect("destroy");
+        this.state.statusFilterUiReady = false;
+      }
+
       window.jQuery(this.dom.statusFilter).multipleSelect({
         selectAll: false,
         filter: true,
         width: "100%",
-        placeholder: "王国状態を選択",
+        placeholder: this.t("statusFilterPlaceholder"),
         minimumCountSelected: 4,
         displayDelimiter: " / ",
         ellipsis: true,
@@ -787,27 +1250,27 @@
 
       const browserName = this.detectBrowserName();
       this.dom.runtimeNotice.hidden = false;
-      this.dom.runtimeNoticeBody.innerHTML =
-        `現在は <strong>file://</strong> で開かれています。${this.escapeHtml(browserName)} での直接起動は制約が多いため、` +
-        `<strong>http://127.0.0.1:6080</strong> から開くと Node.js のローカルプロキシ経由で取得できます。`;
+      this.dom.runtimeNoticeBody.innerHTML = this.t("runtimeNotice", {
+        browser: this.escapeHtml(browserName),
+      });
     }
 
     async handlePrepareOcr() {
       if (this.state.ocrPreparing || this.state.ocrReady) {
         if (this.state.ocrReady) {
-          this.setOcrStatus("OCRはすでに利用可能です。画像を選んで実行してください。");
+          this.setOcrStatus(this.t("ocrAlreadyReady"));
         }
         return;
       }
 
       this.state.ocrPreparing = true;
       this.updateOcrControls();
-      this.setOcrStatus("OCRモデルを準備しています。初回は少し時間がかかります。");
+      this.setOcrStatus(this.t("ocrPreparing"));
 
       try {
         await this.ocr.prepare((message) => this.renderOcrProgress(message, "download"));
         this.state.ocrReady = true;
-        this.setOcrStatus("OCRの準備が完了しました。画像を選んでOCRできます。");
+        this.setOcrStatus(this.t("ocrReady"));
       } catch (error) {
         console.error(error);
         this.setOcrStatus(this.buildOcrErrorMessage(error), true);
@@ -821,7 +1284,7 @@
       const files = this.getSelectedOcrFiles();
       if (files.length > 0) {
         this.dom.ocrDetails.open = true;
-        this.setOcrStatus(`OCR対象画像: ${files.length}枚選択中`);
+        this.setOcrStatus(this.t("ocrTargetImages", { count: files.length }));
       }
       this.updateOcrControls();
     }
@@ -829,23 +1292,20 @@
     async handleRunOcr() {
       const files = this.getSelectedOcrFiles();
       if (files.length === 0) {
-        this.setOcrStatus("OCRする画像を1枚以上選択してください。", true);
+        this.setOcrStatus(this.t("ocrNeedImage"), true);
         return;
       }
 
       for (const file of files) {
         if (file.size > this.config.ocr.maxFileSizeBytes) {
-          this.setOcrStatus(
-            `画像サイズが大きすぎます。10MB以下の画像を選択してください: ${file.name}`,
-            true
-          );
+          this.setOcrStatus(this.t("ocrFileTooLarge", { name: file.name }), true);
           return;
         }
       }
 
       this.state.ocrRunning = true;
       this.updateOcrControls();
-      this.setOcrStatus(`OCRを実行しています... (${files.length}枚)`);
+      this.setOcrStatus(this.t("ocrRunningCount", { count: files.length }));
 
       try {
         const allTexts = [];
@@ -853,7 +1313,13 @@
 
         for (let index = 0; index < files.length; index += 1) {
           const file = files[index];
-          this.setOcrStatus(`OCRを実行しています... (${index + 1}/${files.length}: ${file.name})`);
+          this.setOcrStatus(
+            this.t("ocrRunningProgress", {
+              index: index + 1,
+              total: files.length,
+              name: file.name,
+            })
+          );
           const result = await this.ocr.recognize(file, (message) =>
             this.renderOcrProgress(message, "recognize", {
               current: index + 1,
@@ -882,13 +1348,13 @@
         this.dom.ocrTextOutput.value = mergedText;
         this.dom.ocrDetectedSummary.textContent =
           candidates.length > 0
-            ? `抽出王国番号: ${candidates.join(", ")}`
-            : "抽出王国番号: 見つかりませんでした";
+            ? this.t("ocrDetectedSummary", { candidates: candidates.join(", ") })
+            : this.t("ocrDetectedNone");
         this.dom.ocrDetectedList.textContent =
           candidates.length > 0
-            ? `${files.length}枚のOCR結果から 4〜5桁の数字を候補として抽出し、5桁は末尾4桁へ正規化しました。内容を確認してから反映してください。`
-            : "OCRテキストは取得できましたが、王国番号らしい4〜5桁の候補は見つかりませんでした。";
-        this.setOcrStatus(`OCRが完了しました。${files.length}枚分の結果をまとめています。`);
+            ? this.t("ocrDetectedDescription", { count: files.length })
+            : this.t("ocrDetectedDescriptionNone");
+        this.setOcrStatus(this.t("ocrDone", { count: files.length }));
       } catch (error) {
         console.error(error);
         this.setOcrStatus(this.buildOcrErrorMessage(error), true);
@@ -900,7 +1366,7 @@
 
     applyOcrCandidatesToFilter() {
       if (this.state.ocrCandidateKingdoms.length === 0) {
-        this.setOcrStatus("反映できる王国番号候補がありません。", true);
+        this.setOcrStatus(this.t("ocrNoCandidates"), true);
         return;
       }
 
@@ -908,55 +1374,55 @@
       this.state.currentPage = 1;
       this.rerender();
       this.dom.ocrDetails.open = false;
-      this.setOcrStatus("OCRで抽出した王国番号候補をフィルタに反映しました。");
+      this.setOcrStatus(this.t("ocrApplied"));
     }
 
     handleSaveKingdomList() {
       const name = this.dom.kingdomListNameInput.value.trim();
       const value = this.dom.kingdomRangeListInput.value.trim();
       if (!name) {
-        this.setStatus("保存名を入力してください。", true);
+        this.setStatus(this.t("saveNameRequired"), true);
         return;
       }
       if (!value) {
-        this.setStatus("保存する王国番号リストが空です。", true);
+        this.setStatus(this.t("saveValueRequired"), true);
         return;
       }
 
       this.savedKingdomLists.save(name, value);
       this.renderSavedKingdomLists(name);
       this.dom.kingdomListNameInput.value = "";
-      this.setStatus(`王国番号リスト「${name}」を保存しました。`);
+      this.setStatus(this.t("savedListSaved", { name }));
     }
 
     handleLoadKingdomList() {
       const name = this.dom.savedKingdomListSelect.value;
       if (!name) {
-        this.setStatus("読み込む保存済みリストを選択してください。", true);
+        this.setStatus(this.t("savedListLoadSelect"), true);
         return;
       }
 
       const item = this.savedKingdomLists.readAll().find((entry) => entry.name === name);
       if (!item) {
-        this.setStatus("選択した保存済みリストが見つかりません。", true);
+        this.setStatus(this.t("savedListNotFound"), true);
         this.renderSavedKingdomLists();
         return;
       }
 
       this.applySavedKingdomListToInput(item);
-      this.setStatus(`王国番号リスト「${item.name}」を読み込みました。`);
+      this.setStatus(this.t("savedListLoaded", { name: item.name }));
     }
 
     handleDeleteKingdomList() {
       const name = this.dom.savedKingdomListSelect.value;
       if (!name) {
-        this.setStatus("削除する保存済みリストを選択してください。", true);
+        this.setStatus(this.t("savedListDeleteSelect"), true);
         return;
       }
 
       this.savedKingdomLists.remove(name);
       this.renderSavedKingdomLists();
-      this.setStatus(`王国番号リスト「${name}」を削除しました。`);
+      this.setStatus(this.t("savedListDeleted", { name }));
     }
 
     handleSavedKingdomSelectionChange() {
@@ -985,7 +1451,12 @@
       const percent = Number.isFinite(progress) ? ` ${Math.round(progress * 100)}%` : "";
 
       if (mode === "download") {
-        this.setOcrStatus(`OCRモデル準備中: ${status || "downloading"}${percent}`);
+        this.setOcrStatus(
+          this.t("ocrPreparingProgress", {
+            status: status || this.t("ocrProgressDefaultDownload"),
+            percent,
+          })
+        );
         return;
       }
 
@@ -994,7 +1465,13 @@
           Number.isFinite(context.current) && Number.isFinite(context.total)
             ? `(${context.current}/${context.total}${context.fileName ? `: ${context.fileName}` : ""}) `
             : "";
-        this.setOcrStatus(`OCR実行中: ${prefix}${status || "processing"}${percent}`);
+        this.setOcrStatus(
+          this.t("ocrProcessingProgress", {
+            prefix,
+            status: status || this.t("ocrProgressDefaultProcessing"),
+            percent,
+          })
+        );
       }
     }
 
@@ -1034,7 +1511,7 @@
 
       const placeholder = document.createElement("option");
       placeholder.value = "";
-      placeholder.textContent = "保存済みリストを選択";
+      placeholder.textContent = this.t("savedListPlaceholder");
       this.dom.savedKingdomListSelect.appendChild(placeholder);
 
       for (const item of items) {
@@ -1061,7 +1538,7 @@
           return;
         }
 
-        this.setStatus("APIからデータ取得中です...");
+        this.setStatus(this.t("apiLoading"));
         const list = await this.api.fetchKingdomList(power);
         this.state.kingdomList = this.filter.normalizeList(list);
         this.resetFilters({ preservePageSize: true, shouldRerender: false });
@@ -1080,8 +1557,8 @@
         });
 
         this.render(power, requestPlan);
-        this.setStatus("最新データを取得しました。");
-        this.setCacheInfo(`参照元: API / 取得日時: ${this.formatDateTime(nowIso)}`);
+        this.setStatus(this.t("fetchedLatest"));
+        this.setCacheInfo(this.t("cacheFromApi", { date: this.formatDateTime(nowIso) }));
       } catch (error) {
         console.error(error);
         this.setStatus(this.buildFetchErrorMessage(error), true);
@@ -1157,8 +1634,8 @@
       this.state.currentPage = 1;
       this.resetFilters({ preservePageSize: true, shouldRerender: false });
       this.hideResults();
-      this.setStatus("この必要パワーのキャッシュはありません。取得するボタンを押してください。");
-      this.setCacheInfo("キャッシュ未使用");
+      this.setStatus(this.t("noPowerCache"));
+      this.setCacheInfo(this.t("cacheUnused"));
     }
 
     restoreFromCacheOnLoad() {
@@ -1188,7 +1665,7 @@
     render(power, requestPlan) {
       if (this.state.kingdomList.length === 0) {
         this.hideResults();
-        this.setStatus("表示可能なデータがありません。", true);
+        this.setStatus(this.t("noDisplayData"), true);
         return;
       }
 
@@ -1233,14 +1710,14 @@
         const key = button.dataset.sortKey || "";
         const th = button.closest("th");
         const indicator = button.querySelector(".sort-indicator");
+        const labelNode = button.querySelector("span:not(.sort-indicator)");
         const isActive = this.state.sort.key === key;
         const isDesc = isActive && this.state.sort.direction === "desc";
 
         button.classList.toggle("is-active", isActive);
-        button.setAttribute(
-          "aria-label",
-          `${button.textContent.replace(/\s+/g, " ").trim()}を並び替え`
-        );
+        button.setAttribute("aria-label", this.t("sortAriaLabel", {
+          label: (labelNode ? labelNode.textContent : button.textContent).replace(/\s+/g, " ").trim(),
+        }));
 
         if (indicator) {
           indicator.textContent = isActive ? (isDesc ? "▼" : "▲") : "-";
@@ -1287,8 +1764,12 @@
       const from = totalCount === 0 ? 0 : (this.state.currentPage - 1) * pageSize + 1;
       const to = totalCount === 0 ? 0 : Math.min(this.state.currentPage * pageSize, totalCount);
 
-      this.dom.filteredCount.textContent =
-        `取得: ${fetchedCount.toLocaleString()}件 / 絞り込み: ${totalCount.toLocaleString()}件 / 表示: ${from.toLocaleString()}-${to.toLocaleString()}件`;
+      this.dom.filteredCount.textContent = this.t("resultSummary", {
+        fetched: fetchedCount.toLocaleString(),
+        filtered: totalCount.toLocaleString(),
+        from: from.toLocaleString(),
+        to: to.toLocaleString(),
+      });
       this.dom.pageIndicator.textContent = `${this.state.currentPage} / ${totalPages}`;
       this.dom.prevPageButton.disabled = this.state.currentPage <= 1 || totalCount === 0;
       this.dom.nextPageButton.disabled = this.state.currentPage >= totalPages || totalCount === 0;
@@ -1371,6 +1852,7 @@
     }
 
     setBusy(isBusy) {
+      this.dom.languageSelect.disabled = isBusy;
       this.dom.themeSelect.disabled = isBusy;
       this.dom.fetchButton.disabled = isBusy;
       this.dom.refetchButton.disabled = isBusy;
@@ -1400,17 +1882,7 @@
     }
 
     formatDateTime(isoLike) {
-      const date = new Date(isoLike);
-      if (Number.isNaN(date.getTime())) return "不明";
-      return date.toLocaleString("ja-JP", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-      });
+      return this.i18n.formatDateTime(isoLike);
     }
 
     escapeHtml(value) {
@@ -1427,21 +1899,21 @@
     }
 
     buildFetchErrorMessage(error) {
-      const message = String(error && error.message ? error.message : "不明なエラー");
+      const message = String(error && error.message ? error.message : this.t("unknownError"));
 
       if (window.location.protocol === "file:") {
-        return `${this.detectBrowserName()} で file:// から開いています。http://127.0.0.1:6080 から開き直してください。`;
+        return this.t("fileOpenFetchError", { browser: this.detectBrowserName() });
       }
 
-      return `取得失敗: ${message}`;
+      return this.t("fetchFailed", { message });
     }
 
     buildOcrErrorMessage(error) {
-      const message = String(error && error.message ? error.message : "不明なエラー");
+      const message = String(error && error.message ? error.message : this.t("unknownError"));
       if (window.location.protocol === "file:") {
-        return `${this.detectBrowserName()} で file:// から開いているため OCR ダウンロードに失敗した可能性があります。http://127.0.0.1:6080 から開き直してください。`;
+        return this.t("fileOpenOcrError", { browser: this.detectBrowserName() });
       }
-      return `OCR失敗: ${message}`;
+      return this.t("ocrFailed", { message });
     }
 
     applyCacheResult(cache, power, requestPlan) {
@@ -1449,7 +1921,7 @@
       this.resetFilters({ preservePageSize: true, shouldRerender: false });
       this.render(power, requestPlan);
       const requestedAtText = this.formatDateTime(cache.requestedAt);
-      this.setCacheInfo(`キャッシュを利用しました（${requestedAtText} の取得結果）。`);
+      this.setCacheInfo(this.t("cacheUsed", { date: requestedAtText }));
     }
 
     detectBrowserName() {
@@ -1459,7 +1931,7 @@
       if (ua.includes("OPR/")) return "Opera";
       if (ua.includes("Chrome/")) return "Chrome";
       if (ua.includes("Safari/")) return "Safari";
-      return "このブラウザ";
+      return this.t("browserGeneric");
     }
   }
 
