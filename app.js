@@ -9,6 +9,7 @@
     themeStorageKey: "lm_theme_v1",
     languageStorageKey: "lm_language_v1",
     savedKingdomListsStorageKey: "lm_saved_kingdom_lists_v1",
+    defaultPageSize: 50,
     pageSizeOptions: [30, 50, 100],
     themes: [
       {
@@ -34,6 +35,30 @@
         label: "Graphite",
         description: "寒色グレー基調で引き締まった見た目",
         $primary: "hsl(211, 28%, 43%)",
+      },
+      {
+        id: "sunset",
+        label: "Sunset",
+        description: "夕焼けの赤橙で華やか、温度感がある",
+        $primary: "hsl(14, 76%, 52%)",
+      },
+      {
+        id: "lavender",
+        label: "Lavender",
+        description: "淡い紫を軸にした柔らかいコントラスト",
+        $primary: "hsl(266, 48%, 54%)",
+      },
+      {
+        id: "lagoon",
+        label: "Lagoon",
+        description: "青緑系で爽やか、少しトロピカル",
+        $primary: "hsl(186, 67%, 40%)",
+      },
+      {
+        id: "rosewood",
+        label: "Rosewood",
+        description: "深い赤紫で落ち着いた高級感",
+        $primary: "hsl(338, 47%, 40%)",
       },
     ],
     statusLabelMap: {
@@ -122,6 +147,8 @@
       resultMetaHeading: "取得件数 / 表示状況",
       prevPage: "前へ",
       nextPage: "次へ",
+      exportTableImage: "表を画像出力",
+      exportTableImageAria: "現在表示している表を画像として保存",
       emptyState: "条件に一致する王国はありません。",
       sortKingdom: "王国番号",
       sortScroll: "必要巻物",
@@ -177,6 +204,12 @@
       fileOpenOcrError:
         "{browser} で file:// から開いているため OCR ダウンロードに失敗した可能性があります。http://127.0.0.1:6080 から開き直してください。",
       ocrFailed: "OCR失敗: {message}",
+      exportImageNoRows: "出力できる表示データがありません。",
+      exportImagePreparing: "表の画像を生成しています...",
+      exportImageDone: "現在の表を画像として保存しました。",
+      exportImageLibraryMissing:
+        "画像出力ライブラリの読み込みに失敗しました。ネットワーク接続を確認して再読み込みしてください。",
+      exportImageFailed: "画像出力に失敗: {message}",
       cacheUsed: "キャッシュを利用しました（{date} の取得結果）。",
       statusLabels: {
         1: "閑散",
@@ -247,6 +280,8 @@
       resultMetaHeading: "Fetched / Filtered / Display",
       prevPage: "Prev",
       nextPage: "Next",
+      exportTableImage: "Export Table Image",
+      exportTableImageAria: "Save the currently displayed table as an image",
       emptyState: "No kingdoms match the current filters.",
       sortKingdom: "Kingdom ID",
       sortScroll: "Required Scrolls",
@@ -302,6 +337,12 @@
       fileOpenOcrError:
         "Because this page is opened via file:// in {browser}, OCR download may fail. Reopen from http://127.0.0.1:6080.",
       ocrFailed: "OCR failed: {message}",
+      exportImageNoRows: "There is no visible table data to export.",
+      exportImagePreparing: "Preparing table image...",
+      exportImageDone: "Saved the currently displayed table as an image.",
+      exportImageLibraryMissing:
+        "Image export library failed to load. Check your network and reload this page.",
+      exportImageFailed: "Image export failed: {message}",
       cacheUsed: "Used cache (fetched at {date}).",
       statusLabels: {
         1: "Quiet",
@@ -465,6 +506,8 @@
       this.setText("#resultMetaHeading", "resultMetaHeading");
       this.setText("#prevPageButton", "prevPage");
       this.setText("#nextPageButton", "nextPage");
+      this.setText("#exportTableImageButton", "exportTableImage");
+      this.setAttr("#exportTableImageButton", "aria-label", "exportTableImageAria");
       this.setText("#emptyState .message-body", "emptyState");
       this.setText("#sortKingdomLabel", "sortKingdom");
       this.setText("#sortScrollLabel", "sortScroll");
@@ -629,6 +672,7 @@
       this.filteredCount = document.getElementById("filteredCount");
       this.prevPageButton = document.getElementById("prevPageButton");
       this.nextPageButton = document.getElementById("nextPageButton");
+      this.exportTableImageButton = document.getElementById("exportTableImageButton");
       this.pageIndicator = document.getElementById("pageIndicator");
       this.emptyState = document.getElementById("emptyState");
       this.resultTable = document.getElementById("resultTable");
@@ -662,6 +706,7 @@
       const theme = this.getTheme(themeId);
       this.dom.themeRoot.dataset.theme = theme.id;
       this.applyPrimaryPalette(theme.$primary);
+      this.applyThemeSelectPalette(theme.$primary);
       this.dom.themeSelect.value = theme.id;
       window.localStorage.setItem(this.config.themeStorageKey, theme.id);
     }
@@ -701,6 +746,22 @@
       this.dom.themeRoot.style.setProperty("--bulma-primary-rgb", rgb.join(", "));
       this.setPaletteLightnessScale("--bulma-primary", l);
       this.setPaletteLightnessScale("--bulma-link", l);
+    }
+
+    applyThemeSelectPalette(primaryHsl) {
+      const parsed = this.parseHsl(primaryHsl) || this.parseHsl(this.config.themes[0].$primary);
+      if (!parsed) return;
+
+      const accentLightness = this.clamp(parsed.l - 10, 24, 44);
+      const softLightness = this.clamp(parsed.l + 34, 84, 96);
+      const borderLightness = this.clamp(parsed.l + 12, 52, 74);
+      const accent = `hsl(${parsed.h}deg ${parsed.s}% ${accentLightness}%)`;
+      const soft = `hsl(${parsed.h}deg ${Math.max(parsed.s - 10, 18)}% ${softLightness}%)`;
+      const border = `hsl(${parsed.h}deg ${Math.max(parsed.s - 4, 20)}% ${borderLightness}%)`;
+
+      this.dom.themeRoot.style.setProperty("--theme-select-accent", accent);
+      this.dom.themeRoot.style.setProperty("--theme-select-soft", soft);
+      this.dom.themeRoot.style.setProperty("--theme-select-border", border);
     }
 
     parseHsl(value) {
@@ -1037,8 +1098,15 @@
         kingdomRangeList: "",
         scrollMin: "",
         scrollMax: "",
-        pageSize: this.config.pageSizeOptions[0],
+        pageSize: this.defaultPageSize(),
       };
+    }
+
+    defaultPageSize() {
+      if (this.config.pageSizeOptions.includes(this.config.defaultPageSize)) {
+        return this.config.defaultPageSize;
+      }
+      return this.config.pageSizeOptions[0];
     }
 
     normalizeRow(row) {
@@ -1102,7 +1170,7 @@
 
     normalizePageSize(value) {
       const size = Number(value);
-      return this.config.pageSizeOptions.includes(size) ? size : this.config.pageSizeOptions[0];
+      return this.config.pageSizeOptions.includes(size) ? size : this.defaultPageSize();
     }
 
     normalizeStatusValues(values) {
@@ -1212,6 +1280,7 @@
         ocrPreparing: false,
         ocrRunning: false,
         ocrCandidateKingdoms: [],
+        exportingImage: false,
         statusFilterUiReady: false,
         syncingStatusFilterUi: false,
       };
@@ -1342,6 +1411,7 @@
       this.dom.resetFiltersButton.addEventListener("click", () => this.resetFilters());
       this.dom.prevPageButton.addEventListener("click", () => this.movePage(-1));
       this.dom.nextPageButton.addEventListener("click", () => this.movePage(1));
+      this.dom.exportTableImageButton.addEventListener("click", () => this.handleExportTableImage());
       for (const button of this.dom.sortButtons) {
         button.addEventListener("click", () => this.handleSortChange(button.dataset.sortKey || ""));
       }
@@ -1710,15 +1780,356 @@
       this.rerender();
     }
 
+    async handleExportTableImage() {
+      if (this.state.exportingImage) return;
+      if (this.dom.resultTable.hidden || this.dom.resultBody.children.length === 0) {
+        this.setStatus(this.t("exportImageNoRows"), true);
+        return;
+      }
+      if (typeof window.html2canvas !== "function") {
+        this.setStatus(this.t("exportImageLibraryMissing"), true);
+        return;
+      }
+
+      this.state.exportingImage = true;
+      this.updateExportButtonDisabledState();
+      this.setStatus(this.t("exportImagePreparing"));
+
+      const container = this.createExportContainer();
+      document.body.appendChild(container);
+
+      try {
+        const canvas = await window.html2canvas(container, {
+          backgroundColor: "#ffffff",
+          useCORS: true,
+          logging: false,
+          scale: Math.max(1.5, window.devicePixelRatio || 1),
+        });
+        const blob = await this.canvasToBlob(canvas);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = this.buildExportFileName();
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        this.setStatus(this.t("exportImageDone"));
+      } catch (error) {
+        console.error(error);
+        const message = String(error && error.message ? error.message : this.t("unknownError"));
+        this.setStatus(this.t("exportImageFailed", { message }), true);
+      } finally {
+        container.remove();
+        this.state.exportingImage = false;
+        this.updateExportButtonDisabledState();
+      }
+    }
+
+    createExportContainer() {
+      const rows = this.getExportRows();
+      const useSplitLayout = rows.length >= 20;
+      const palette = this.getExportPalette();
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "fixed";
+      wrapper.style.left = "-100000px";
+      wrapper.style.top = "0";
+      wrapper.style.width = `${useSplitLayout ? 1420 : Math.max(this.dom.resultTable.offsetWidth, 980)}px`;
+      wrapper.style.padding = "32px";
+      wrapper.style.background = `linear-gradient(135deg, ${palette.background} 0%, ${palette.backgroundAccent} 100%)`;
+      wrapper.style.border = `1px solid ${palette.border}`;
+      wrapper.style.borderRadius = "28px";
+      wrapper.style.boxSizing = "border-box";
+      wrapper.style.fontFamily = window.getComputedStyle(document.body).fontFamily;
+      wrapper.style.color = palette.text;
+      wrapper.style.boxShadow = "0 28px 60px rgba(15, 23, 42, 0.18)";
+      wrapper.style.overflow = "hidden";
+
+      const hero = document.createElement("div");
+      hero.style.display = "flex";
+      hero.style.alignItems = "flex-start";
+      hero.style.justifyContent = "space-between";
+      hero.style.gap = "18px";
+      hero.style.marginBottom = "24px";
+      hero.style.padding = "24px 26px";
+      hero.style.border = `1px solid ${palette.border}`;
+      hero.style.borderRadius = "24px";
+      hero.style.background = `linear-gradient(135deg, ${palette.hero} 0%, ${palette.heroAccent} 100%)`;
+      hero.style.color = palette.heroText;
+      hero.style.boxShadow = "0 18px 34px rgba(15, 23, 42, 0.18)";
+
+      const heroText = document.createElement("div");
+
+      const eyebrow = document.createElement("div");
+      eyebrow.textContent = "Migration Snapshot";
+      eyebrow.style.fontSize = "11px";
+      eyebrow.style.fontWeight = "700";
+      eyebrow.style.letterSpacing = "0.16em";
+      eyebrow.style.textTransform = "uppercase";
+      eyebrow.style.opacity = "0.76";
+
+      const heading = document.createElement("h2");
+      heading.textContent = this.t("headerTitle");
+      heading.style.margin = "8px 0 10px";
+      heading.style.fontSize = "28px";
+      heading.style.fontWeight = "800";
+      heading.style.lineHeight = "1.2";
+
+      const subHeading = document.createElement("p");
+      subHeading.textContent = `${this.dom.filteredCount.textContent} | ${this.dom.pageIndicator.textContent}`;
+      subHeading.style.margin = "0";
+      subHeading.style.fontSize = "14px";
+      subHeading.style.lineHeight = "1.65";
+      subHeading.style.opacity = "0.9";
+
+      heroText.appendChild(eyebrow);
+      heroText.appendChild(heading);
+      heroText.appendChild(subHeading);
+
+      const chips = this.buildExportSummaryChips(rows, palette);
+
+      hero.appendChild(heroText);
+      hero.appendChild(chips);
+
+      const tableLayout = this.buildExportTableLayout(rows, palette, useSplitLayout);
+
+      wrapper.appendChild(hero);
+      wrapper.appendChild(tableLayout);
+      return wrapper;
+    }
+
+    getExportRows() {
+      return [...this.dom.resultBody.querySelectorAll("tr")].map((row) =>
+        [...row.querySelectorAll("td, th")].map((cell) => String(cell.textContent || "").replace(/\s+/g, " ").trim())
+      );
+    }
+
+    getExportPalette() {
+      const styles = window.getComputedStyle(document.documentElement);
+      return {
+        background: styles.getPropertyValue("--surface-2").trim() || "#f6f9fc",
+        backgroundAccent: styles.getPropertyValue("--page-bg").trim() || "#eef4fb",
+        border: styles.getPropertyValue("--border").trim() || "#d8dee8",
+        text: styles.getPropertyValue("--text").trim() || "#1f2937",
+        muted: styles.getPropertyValue("--muted").trim() || "#4b5563",
+        strong: styles.getPropertyValue("--strong").trim() || "#163b67",
+        tableHead: styles.getPropertyValue("--table-head").trim() || "#eef5fc",
+        tableRow: styles.getPropertyValue("--table-row").trim() || "#ffffff",
+        tableStripe: styles.getPropertyValue("--table-stripe").trim() || "#f4f8fd",
+        indicatorBg: styles.getPropertyValue("--indicator-bg").trim() || "#edf5ff",
+        indicatorText: styles.getPropertyValue("--indicator-text").trim() || "#1b4f85",
+        hero: styles.getPropertyValue("--hero-base").trim() || "#183153",
+        heroAccent: styles.getPropertyValue("--hero-accent").trim() || "#2f6ea5",
+        heroText: styles.getPropertyValue("--hero-text").trim() || "#f7fbff",
+      };
+    }
+
+    buildExportSummaryChips(rows, palette) {
+      const wrap = document.createElement("div");
+      wrap.style.display = "grid";
+      wrap.style.gridTemplateColumns = "repeat(2, minmax(140px, 1fr))";
+      wrap.style.gap = "10px";
+      wrap.style.minWidth = "320px";
+
+      const chips = [
+        { label: "Rows", value: String(rows.length) },
+        { label: "Layout", value: rows.length >= 20 ? "Split View" : "Single View" },
+        { label: "Page", value: this.dom.pageIndicator.textContent || "-" },
+        { label: "Exported", value: this.formatExportTimestamp() },
+      ];
+
+      for (const chip of chips) {
+        const item = document.createElement("div");
+        item.style.padding = "12px 14px";
+        item.style.borderRadius = "18px";
+        item.style.background = "rgba(255, 255, 255, 0.14)";
+        item.style.border = "1px solid rgba(255, 255, 255, 0.18)";
+        item.style.backdropFilter = "blur(10px)";
+
+        const label = document.createElement("div");
+        label.textContent = chip.label;
+        label.style.fontSize = "10px";
+        label.style.fontWeight = "700";
+        label.style.letterSpacing = "0.12em";
+        label.style.textTransform = "uppercase";
+        label.style.opacity = "0.72";
+
+        const value = document.createElement("div");
+        value.textContent = chip.value;
+        value.style.marginTop = "6px";
+        value.style.fontSize = "15px";
+        value.style.fontWeight = "700";
+
+        item.appendChild(label);
+        item.appendChild(value);
+        wrap.appendChild(item);
+      }
+
+      return wrap;
+    }
+
+    buildExportTableLayout(rows, palette, useSplitLayout) {
+      if (!useSplitLayout) {
+        const single = document.createElement("div");
+        single.appendChild(this.buildExportTableCard(rows, 1, palette, false));
+        return single;
+      }
+
+      const grid = document.createElement("div");
+      grid.style.display = "grid";
+      grid.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+      grid.style.gap = "22px";
+      grid.style.alignItems = "start";
+
+      const splitIndex = Math.ceil(rows.length / 2);
+      const leftRows = rows.slice(0, splitIndex);
+      const rightRows = rows.slice(splitIndex);
+
+      grid.appendChild(this.buildExportTableCard(leftRows, 1, palette, true));
+      grid.appendChild(this.buildExportTableCard(rightRows, splitIndex + 1, palette, true));
+      return grid;
+    }
+
+    buildExportTableCard(rows, startNumber, palette, isSplitLayout) {
+      const card = document.createElement("section");
+      card.style.padding = "18px";
+      card.style.borderRadius = "24px";
+      card.style.border = `1px solid ${palette.border}`;
+      card.style.background = "rgba(255, 255, 255, 0.86)";
+      card.style.boxShadow = "0 18px 38px rgba(15, 23, 42, 0.08)";
+
+      const badge = document.createElement("div");
+      badge.textContent = isSplitLayout
+        ? `${startNumber}-${startNumber + rows.length - 1} items`
+        : `${rows.length} items`;
+      badge.style.display = "inline-flex";
+      badge.style.alignItems = "center";
+      badge.style.padding = "7px 12px";
+      badge.style.borderRadius = "999px";
+      badge.style.background = palette.indicatorBg;
+      badge.style.color = palette.indicatorText;
+      badge.style.fontSize = "12px";
+      badge.style.fontWeight = "700";
+      badge.style.marginBottom = "14px";
+
+      card.appendChild(badge);
+      card.appendChild(this.buildExportTable(rows, palette, startNumber));
+      return card;
+    }
+
+    buildExportTable(rows, palette, startNumber = 1) {
+      const sourceTable = this.dom.resultTable.querySelector("table");
+      const table = document.createElement("table");
+      table.style.width = "100%";
+      table.style.borderCollapse = "collapse";
+      table.style.tableLayout = "fixed";
+      table.style.fontSize = "14px";
+      table.style.border = `1px solid ${palette.border}`;
+      table.style.background = palette.tableRow;
+      table.style.borderRadius = "18px";
+      table.style.overflow = "hidden";
+
+      const thead = document.createElement("thead");
+      const headerRow = document.createElement("tr");
+      const headerCells = sourceTable ? [...sourceTable.querySelectorAll("thead th")] : [];
+
+      const indexHeadCell = document.createElement("th");
+      indexHeadCell.textContent = "#";
+      indexHeadCell.style.padding = "11px 10px";
+      indexHeadCell.style.border = `1px solid ${palette.border}`;
+      indexHeadCell.style.background = palette.tableHead;
+      indexHeadCell.style.color = palette.strong;
+      indexHeadCell.style.textAlign = "center";
+      indexHeadCell.style.fontWeight = "800";
+      indexHeadCell.style.width = "56px";
+      headerRow.appendChild(indexHeadCell);
+
+      for (const th of headerCells) {
+        const headCell = document.createElement("th");
+        headCell.textContent = String(th.textContent || "").replace(/\s+/g, " ").trim();
+        headCell.style.padding = "11px 12px";
+        headCell.style.border = `1px solid ${palette.border}`;
+        headCell.style.background = palette.tableHead;
+        headCell.style.color = palette.strong;
+        headCell.style.textAlign = "left";
+        headCell.style.fontWeight = "800";
+        headerRow.appendChild(headCell);
+      }
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+        const tr = document.createElement("tr");
+        const numberCell = document.createElement("td");
+        numberCell.textContent = String(startNumber + rowIndex);
+        numberCell.style.padding = "10px";
+        numberCell.style.border = `1px solid ${palette.border}`;
+        numberCell.style.background = rowIndex % 2 === 1 ? palette.tableStripe : palette.tableRow;
+        numberCell.style.color = palette.indicatorText;
+        numberCell.style.textAlign = "center";
+        numberCell.style.fontWeight = "700";
+        tr.appendChild(numberCell);
+
+        for (const value of rows[rowIndex]) {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          cell.style.padding = "10px 12px";
+          cell.style.border = `1px solid ${palette.border}`;
+          cell.style.color = palette.text;
+          cell.style.background = rowIndex % 2 === 1 ? palette.tableStripe : palette.tableRow;
+          cell.style.textAlign = "left";
+          cell.style.fontWeight = "500";
+          tr.appendChild(cell);
+        }
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      return table;
+    }
+
+    formatExportTimestamp() {
+      return new Intl.DateTimeFormat(this.i18n.currentLanguage() === "ja" ? "ja-JP" : "en-US", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date());
+    }
+
+    canvasToBlob(canvas) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+            return;
+          }
+          reject(new Error("Canvas toBlob failed"));
+        }, "image/png");
+      });
+    }
+
+    buildExportFileName() {
+      const now = new Date();
+      const yyyy = String(now.getFullYear()).padStart(4, "0");
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mi = String(now.getMinutes()).padStart(2, "0");
+      const ss = String(now.getSeconds()).padStart(2, "0");
+      return `migration-table-${yyyy}${mm}${dd}-${hh}${mi}${ss}.png`;
+    }
+
     resetFilters(options = {}) {
       const preservePageSize = options.preservePageSize === true;
       const shouldRerender = options.shouldRerender !== false;
       const currentPageSize = this.filter.normalizePageSize(
-        this.dom.pageSizeSelect.value || this.state.filters.pageSize || this.config.pageSizeOptions[0]
+        this.dom.pageSizeSelect.value || this.state.filters.pageSize || this.filter.defaultPageSize()
       );
 
       this.state.filters = this.filter.createDefaultFilters();
-      this.state.filters.pageSize = preservePageSize ? currentPageSize : this.config.pageSizeOptions[0];
+      this.state.filters.pageSize = preservePageSize ? currentPageSize : this.filter.defaultPageSize();
       this.state.currentPage = 1;
       this.applyFiltersToUI();
 
@@ -1794,6 +2205,7 @@
       const hasRows = pageRows.length > 0;
       this.dom.emptyState.hidden = hasRows;
       this.dom.resultTable.hidden = !hasRows;
+      this.updateExportButtonDisabledState();
     }
 
     renderTable(rows) {
@@ -1886,6 +2298,7 @@
       this.dom.cacheInfo.hidden = true;
       this.dom.emptyState.hidden = true;
       this.dom.resultTable.hidden = true;
+      this.updateExportButtonDisabledState();
     }
 
     syncFiltersFromUI() {
@@ -1972,6 +2385,7 @@
       this.dom.scrollMinInput.disabled = isBusy;
       this.dom.scrollMaxInput.disabled = isBusy;
       this.dom.resetFiltersButton.disabled = isBusy;
+      this.updateExportButtonDisabledState(isBusy);
 
       if (isBusy) {
         this.dom.prevPageButton.disabled = true;
@@ -1979,11 +2393,16 @@
         return;
       }
 
-      const pageSize = this.state.filters.pageSize || this.config.pageSizeOptions[0];
+      const pageSize = this.state.filters.pageSize || this.filter.defaultPageSize();
       const totalPages = Math.max(1, Math.ceil((this.state.filteredList.length || 0) / pageSize));
       this.dom.prevPageButton.disabled = this.state.currentPage <= 1 || this.state.filteredList.length === 0;
       this.dom.nextPageButton.disabled =
         this.state.currentPage >= totalPages || this.state.filteredList.length === 0;
+    }
+
+    updateExportButtonDisabledState(forceDisabled = false) {
+      const hasRows = !this.dom.resultTable.hidden && this.dom.resultBody.children.length > 0;
+      this.dom.exportTableImageButton.disabled = forceDisabled || this.state.exportingImage || !hasRows;
     }
 
     formatDateTime(isoLike) {

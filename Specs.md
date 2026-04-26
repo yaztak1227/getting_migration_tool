@@ -25,12 +25,14 @@
 - Fuzzysort `3.1.0`
 - Tesseract.js `6.x`
 - Multiple Select `2.3.0`
+- html2canvas `1.4.1`
 
 ## Theme System
 - Theme is selected from a compact dropdown (`themeSelect`) aligned at the right side of the header.
-- Available themes: `ocean`, `ivory`, `forest`, `graphite`.
+- Available themes: `ocean`, `ivory`, `forest`, `graphite`, `sunset`, `lavender`, `lagoon`, `rosewood`.
 - Each theme defines a `$primary` in `hsl(...)` format in `app.js` config.
 - On theme apply, `app.js` maps `$primary` to Bulma CSS variables (`--bulma-primary-*`, `--bulma-link-*`) and palette lightness steps.
+- The theme selector text, border accent, and soft background tint also derive from the active theme's `$primary`, using a darker readable accent for the selected value.
 - Additional theme variables in `styles.css` control panel/table/status coloring.
 - Button colors use Bulma palette variables (`--bulma-*-soft`, `--bulma-*-bold`, `--bulma-*-invert`, `--bulma-*-dark`) to keep contrast readable across themes.
 
@@ -68,7 +70,7 @@
   - List: `1201 1203 1207`
   - Mixed delimiters: comma / space / tab, and `~` variants.
 - Scroll filter: min/max numeric range.
-- Paging: selectable page size (`30`, `50`, `100`) with prev/next controls.
+- Paging: selectable page size (`30`, `50`, `100`) with prev/next controls, defaulting to `50`.
 
 ## UI States
 - Status message area for waiting/loading/error/cache usage.
@@ -97,6 +99,8 @@
   - layout is controlled with Bulma responsive classes (`columns` / `column` / `is-*-mobile|tablet` / `is-fullwidth`) rather than custom grid CSS.
   - controls in the kingdom filter section stay within the section frame without horizontal overflow.
 - Result area is shown in the right column with pager, empty state, table, and cache info.
+- Result toolbar includes a button to export the currently displayed table page as a formatted PNG image.
+- Exported images use a decorated summary-card layout; when the current page has 20 or more rows, the exported image splits the table into left/right columns for easier scanning.
 - Result table stays inside the result column with horizontal scrolling when the available width is narrower than the table minimum.
 - Result table headers support client-side sorting for `王国番号`, `必要巻物`, `王国状態`, and `ランク`; sorting is applied to the full filtered result set before pagination.
 - The `ランク` header includes a small `!` tooltip trigger; on hover/focus it explains that `0はランク外です`.
