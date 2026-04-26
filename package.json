@@ -1,0 +1,11 @@
+{
+  "name": "getting_migration_tool",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "serve": "node server.js",
+    "start:6000": "PORT=6000 node server.js",
+    "start:6080": "PORT=6080 node server.js"
+  }
+}

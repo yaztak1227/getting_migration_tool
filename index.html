@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ja" data-theme="ocean">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>移民巻物枚数チェック</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="section">
+      <div class="container is-max-desktop">
+        <header class="app-header mb-4">
+          <div class="header-left">
+            <h1 class="title is-4 mb-0">Lordsmobile 移民王国検索</h1>
+            <div class="tooltip-wrap">
+              <button
+                id="headerInfoButton"
+                class="button is-small is-light tooltip-button"
+                type="button"
+                aria-label="ツール説明"
+              >
+                ?
+              </button>
+              <div class="tooltip-card" role="note">
+                必要パワーごとの移民対象王国一覧を取得し、そのまま検索・絞り込み・ページ表示まで行えます。
+                ローカルの Node.js プロキシ経由で API を取得します。
+              </div>
+            </div>
+          </div>
+          <div class="select is-small header-theme-select">
+            <select id="themeSelect" aria-label="テーマ選択"></select>
+          </div>
+        </header>
+
+        <section class="card app-card">
+          <div class="card-content p-5">
+            <div class="control-panel mb-5">
+              <div class="columns is-variable is-3 is-multiline is-vcentered">
+                <div class="column is-12-mobile is-5-tablet is-5-desktop">
+                  <label class="label" for="powerSelect">必要パワー</label>
+                  <div class="select is-fullwidth is-medium">
+                    <select id="powerSelect" aria-label="必要パワー"></select>
+                  </div>
+                </div>
+                <div class="column is-12-mobile is-4-tablet is-4-desktop">
+                  <label class="label" for="fetchButton">取得</label>
+                  <button id="fetchButton" class="button is-primary is-medium is-fullwidth">
+                    取得する
+                  </button>
+                </div>
+                <div class="column is-12-mobile is-3-tablet is-3-desktop">
+                  <label class="label" for="refetchButton">更新</label>
+                  <button id="refetchButton" class="button is-light is-medium is-fullwidth">
+                    再取得
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <article id="status" class="message is-light status-box">
+              <div class="message-body">待機中です。</div>
+            </article>
+            <article id="runtimeNotice" class="message is-info is-light status-box" hidden>
+              <div class="message-body"></div>
+            </article>
+
+            <div id="summary" class="notification summary-panel mt-4" hidden>
+              <strong id="requiredScrollsLabel">取得件数: -</strong>
+              <div id="summaryDetail" class="is-size-7 mt-2"></div>
+            </div>
+
+            <section id="filterPanel" class="control-panel mt-5" hidden>
+              <div class="columns is-variable is-4 is-multiline">
+                <div class="column is-12-mobile is-6-tablet is-4-desktop">
+                  <label class="label" for="searchInput">検索</label>
+                  <input
+                    id="searchInput"
+                    class="input"
+                    type="search"
+                    placeholder="王国番号・状態・ランクで検索"
+                    autocomplete="off"
+                  />
+                </div>
+
+                <div class="column is-12-mobile is-6-tablet is-4-desktop">
+                  <label class="label" for="statusFilter">王国状態</label>
+                  <div class="select is-fullwidth">
+                    <select id="statusFilter" aria-label="王国状態フィルタ"></select>
+                  </div>
+                </div>
+
+                <div class="column is-12-mobile is-6-tablet is-2-desktop">
+                  <label class="label" for="pageSizeSelect">表示件数</label>
+                  <div class="select is-fullwidth">
+                    <select id="pageSizeSelect" aria-label="表示件数"></select>
+                  </div>
+                </div>
+
+                <div class="column is-12-mobile is-6-tablet is-2-desktop">
+                  <label class="label" for="resetFiltersButton">表示条件</label>
+                  <button id="resetFiltersButton" class="button is-light is-fullwidth">
+                    条件をリセット
+                  </button>
+                </div>
+
+                <div class="column is-12-mobile is-6-tablet">
+                  <label class="label" for="kingdomRangeListInput">王国番号（範囲 or リスト）</label>
+                  <input
+                    id="kingdomRangeListInput"
+                    class="input"
+                    type="text"
+                    placeholder="例: 1200-1250 または 1201 1203 1207（カンマ/空白/タブ区切り）"
+                    autocomplete="off"
+                  />
+                </div>
+
+                <div class="column is-12-mobile is-6-tablet">
+                  <label class="label">必要巻物の範囲</label>
+                  <div class="range-grid">
+                    <input id="scrollMinInput" class="input" type="number" min="0" placeholder="最小" />
+                    <input id="scrollMaxInput" class="input" type="number" min="0" placeholder="最大" />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div id="resultMeta" class="box result-box mt-5" hidden>
+              <div class="result-toolbar">
+                <div>
+                  <p class="heading mb-2">表示状況</p>
+                  <strong id="filteredCount">0件</strong>
+                </div>
+                <div class="pager-actions">
+                  <button id="prevPageButton" class="button is-light">前へ</button>
+                  <span id="pageIndicator" class="tag is-medium page-indicator">1 / 1</span>
+                  <button id="nextPageButton" class="button is-light">次へ</button>
+                </div>
+              </div>
+            </div>
+
+            <article id="emptyState" class="message is-light empty-box mt-5" hidden>
+              <div class="message-body">条件に一致する王国はありません。</div>
+            </article>
+
+            <div id="resultTable" class="table-container table-wrap mt-5" hidden>
+              <table class="table is-fullwidth is-hoverable is-striped">
+                <thead>
+                  <tr>
+                    <th>王国番号</th>
+                    <th>必要巻物</th>
+                    <th>王国状態</th>
+                    <th>ランク</th>
+                  </tr>
+                </thead>
+                <tbody id="resultBody"></tbody>
+              </table>
+            </div>
+
+            <p class="foot-note mt-4" id="cacheInfo"></p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.8.4/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
