@@ -12,7 +12,7 @@
   </head>
   <body>
     <main class="section">
-      <div class="container is-max-desktop">
+      <div class="container is-fluid app-shell">
         <header class="app-header mb-4">
           <div class="header-left">
             <h1 class="title is-4 mb-0">Lordsmobile 移民王国検索</h1>
@@ -36,8 +36,8 @@
           </div>
         </header>
 
-        <div class="columns app-layout is-variable is-5">
-          <div class="column is-narrow app-sidebar-column">
+        <div class="columns app-layout is-desktop is-variable is-5">
+          <div class="column is-12-tablet is-4-desktop is-3-widescreen app-sidebar-column">
             <details id="filterPanel" class="side-drawer" open hidden>
               <summary class="side-drawer-toggle">検索メニュー</summary>
               <aside class="control-panel side-panel">
@@ -64,9 +64,17 @@
 
                       <div class="field">
                         <label class="label">必要巻物の範囲</label>
-                        <div class="range-grid">
-                          <input id="scrollMinInput" class="input" type="number" min="0" placeholder="最小" />
-                          <input id="scrollMaxInput" class="input" type="number" min="0" placeholder="最大" />
+                        <div class="columns is-variable is-2 is-multiline range-columns">
+                          <div class="column is-12-mobile is-6-tablet">
+                            <div class="control">
+                              <input id="scrollMinInput" class="input" type="number" min="0" placeholder="最小" />
+                            </div>
+                          </div>
+                          <div class="column is-12-mobile is-6-tablet">
+                            <div class="control">
+                              <input id="scrollMaxInput" class="input" type="number" min="0" placeholder="最大" />
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -79,43 +87,82 @@
                     </section>
 
                     <section class="kingdom-filter-section side-group">
-                      <label class="label" for="kingdomRangeListInput">王国番号（範囲 or リスト）</label>
-                      <input
-                        id="kingdomRangeListInput"
-                        class="input"
-                        type="text"
-                        placeholder="例: 1200-1250 または 1201 1203 1207（カンマ/空白/タブ区切り）"
-                        autocomplete="off"
-                      />
-
-                      <div class="saved-kingdom-panel mt-3">
-                        <div class="saved-kingdom-grid">
+                      <div class="field">
+                        <label class="label" for="kingdomRangeListInput">王国番号（範囲 or リスト）</label>
+                        <div class="control">
                           <input
-                            id="kingdomListNameInput"
+                            id="kingdomRangeListInput"
                             class="input"
                             type="text"
-                            placeholder="保存名 例: 候補A"
+                            placeholder="例: 1200-1250 または 1201 1203 1207（カンマ/空白/タブ区切り）"
                             autocomplete="off"
                           />
-                          <button id="saveKingdomListButton" class="button is-light" type="button">
-                            名前を付けて保存
-                          </button>
+                        </div>
+                      </div>
+
+                      <div class="saved-kingdom-panel mt-3">
+                        <div class="saved-kingdom-block">
+                          <p class="saved-kingdom-title">現在の条件を保存</p>
+                          <div class="columns is-variable is-2 is-multiline">
+                            <div class="column is-12-mobile is-12-tablet is-7-desktop">
+                              <div class="field mb-0">
+                                <div class="control">
+                                  <input
+                                    id="kingdomListNameInput"
+                                    class="input"
+                                    type="text"
+                                    placeholder="保存名 例: 候補A"
+                                    autocomplete="off"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <div class="column is-12-mobile is-12-tablet is-5-desktop">
+                              <div class="field mb-0">
+                                <div class="control">
+                                  <button id="saveKingdomListButton" class="button is-light is-fullwidth" type="button">
+                                    条件を保存
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
 
-                        <div class="saved-kingdom-grid mt-3">
-                          <div class="select is-fullwidth">
-                            <select id="savedKingdomListSelect" aria-label="保存済み王国番号リスト">
-                              <option value="">保存済みリストを選択</option>
-                            </select>
+                        <div class="saved-kingdom-block mt-3">
+                          <p class="saved-kingdom-title">保存済みリストを使う</p>
+                          <div class="columns is-variable is-2 is-multiline">
+                            <div class="column is-12-mobile is-12-tablet is-6-desktop">
+                              <div class="field mb-0">
+                                <div class="control">
+                                  <div class="select is-fullwidth">
+                                    <select id="savedKingdomListSelect" aria-label="保存済み王国番号リスト">
+                                      <option value="">保存済みリストを選択</option>
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="column is-6-mobile is-6-tablet is-3-desktop">
+                              <div class="field mb-0">
+                                <div class="control">
+                                  <button id="loadKingdomListButton" class="button is-link is-light is-fullwidth" type="button">
+                                    読み込む
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="column is-6-mobile is-6-tablet is-3-desktop">
+                              <div class="field mb-0">
+                                <div class="control">
+                                  <button id="deleteKingdomListButton" class="button is-light is-fullwidth" type="button">
+                                    削除
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <button id="loadKingdomListButton" class="button is-light" type="button">
-                            読み込む
-                          </button>
-                          <button id="deleteKingdomListButton" class="button is-light" type="button">
-                            削除
-                          </button>
                         </div>
-                        <p id="savedKingdomListMeta" class="help mt-2">王国番号フィルタは名前付きで保存できます。</p>
                       </div>
 
                       <details id="ocrDetails" class="ocr-details mt-4">
@@ -248,22 +295,17 @@
                   </div>
                 </div>
 
-                <article id="status" class="message is-light status-box">
-                  <div class="message-body">待機中です。</div>
+                <article id="status" class="message is-light status-box" hidden>
+                  <div class="message-body"></div>
                 </article>
                 <article id="runtimeNotice" class="message is-info is-light status-box mt-4" hidden>
                   <div class="message-body"></div>
                 </article>
 
-                <div id="summary" class="notification summary-panel mt-4" hidden>
-                  <strong id="requiredScrollsLabel">取得件数: -</strong>
-                  <div id="summaryDetail" class="is-size-7 mt-2"></div>
-                </div>
-
                 <div id="resultMeta" class="box result-box" hidden>
                   <div class="result-toolbar">
                     <div>
-                      <p class="heading mb-2">表示状況</p>
+                      <p class="heading mb-2">取得件数 / 表示状況</p>
                       <strong id="filteredCount">0件</strong>
                     </div>
                     <div class="pager-actions">
@@ -273,6 +315,8 @@
                     </div>
                   </div>
                 </div>
+
+                <p class="foot-note cache-note mt-3 mb-0" id="cacheInfo" hidden></p>
 
                 <article id="emptyState" class="message is-light empty-box mt-5" hidden>
                   <div class="message-body">条件に一致する王国はありません。</div>
@@ -291,8 +335,6 @@
                     <tbody id="resultBody"></tbody>
                   </table>
                 </div>
-
-                <p class="foot-note mt-4" id="cacheInfo"></p>
               </div>
               </div>
             </section>

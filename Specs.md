@@ -29,6 +29,7 @@
 - Each theme defines a `$primary` in `hsl(...)` format in `app.js` config.
 - On theme apply, `app.js` maps `$primary` to Bulma CSS variables (`--bulma-primary-*`, `--bulma-link-*`) and palette lightness steps.
 - Additional theme variables in `styles.css` control panel/table/status coloring.
+- Button colors use Bulma palette variables (`--bulma-*-soft`, `--bulma-*-bold`, `--bulma-*-invert`, `--bulma-*-dark`) to keep contrast readable across themes.
 
 ## Data Fetch and Cache
 - API call is POST `/api/migration` via local proxy.
@@ -56,7 +57,12 @@
 ## UI States
 - Status message area for waiting/loading/error/cache usage.
 - Search/filter UI is separated into a left-side menu on desktop layouts.
-- On mobile/tablet narrow layouts, the left menu stacks above the result area.
+- Desktop layout uses a fluid-width shell so the left menu + main result area can expand across the viewport.
+- On mobile/tablet narrow layouts (Bulma desktop breakpoint under `1024px`), the left menu stacks above the result area and is toggled with a drawer summary.
+- Saved-list control rows collapse to single-column on medium/small widths to avoid button overlap.
+- The sidebar column is kept between about `19rem` and `22rem` on desktop and released to `max-width: 100%` on narrower widths.
+- A visible gap is kept between the sidebar and main content on desktop, and between stacked blocks on narrower widths.
+- Form controls and buttons use `width: 100%`, `min-width: 0`, and button text wrapping so labels do not push the side panel wider.
 - OCR helper area:
   - OCR helper is placed as a collapsible optional section directly below the kingdom filter input.
   - OCR helper summary text is `画像から読み込む`.
@@ -67,11 +73,18 @@
   - extracted kingdom candidates can be applied to `kingdomRangeListInput`.
 - Saved kingdom list area:
   - current kingdom filter text can be stored with a user-defined name.
-  - saved lists can be loaded or deleted later from localStorage.
+  - saved lists can be selected/loaded/deleted later from localStorage.
+  - selecting a saved list reflects its kingdom numbers directly into `kingdomRangeListInput`.
+  - save controls are grouped as `現在の条件を保存`, and load/delete controls are grouped as `保存済みリストを使う` to keep the action flow clear on narrow widths.
+  - layout is controlled with Bulma responsive classes (`columns` / `column` / `is-*-mobile|tablet` / `is-fullwidth`) rather than custom grid CSS.
+  - controls in the kingdom filter section stay within the section frame without horizontal overflow.
 - Result area is shown in the right column with pager, empty state, table, and cache info.
-- Summary panel (total and filtered counts + request conditions).
+- Result table stays inside the result column with horizontal scrolling when the available width is narrower than the table minimum.
+- Result metadata header merges total fetched count and display status into one line (fetched/filter/display range).
+- Cache usage note is shown as a compact small text line above the table area when results are visible (e.g. `キャッシュを利用しました（YYYY/MM/DD HH:MM:SS の取得結果）。`).
 - Empty state when no rows match.
 - Theme-aware table colors including head/stripe/hover and text contrast.
+- Tooltip/popover UI is hidden from layout flow when inactive so it does not introduce horizontal overflow.
 
 ## OCR Helper
 - Browser OCR behavior is inspired by `ogwata/ndlocr-lite-web-ai`, but implemented in this project without a build step.

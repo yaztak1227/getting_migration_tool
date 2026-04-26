@@ -162,6 +162,13 @@ body {
   min-height: 100vh;
 }
 
+.app-shell {
+  max-width: none !important;
+  box-sizing: border-box;
+  padding-left: clamp(0.75rem, 2.2vw, 1.8rem);
+  padding-right: clamp(0.75rem, 2.2vw, 1.8rem);
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -194,6 +201,7 @@ body {
 }
 
 .tooltip-card {
+  display: none;
   position: absolute;
   top: calc(100% + 0.6rem);
   left: 0;
@@ -215,6 +223,7 @@ body {
 
 .tooltip-wrap:hover .tooltip-card,
 .tooltip-wrap:focus-within .tooltip-card {
+  display: block;
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
@@ -222,6 +231,9 @@ body {
 
 .app-layout {
   align-items: flex-start;
+  overflow-x: clip;
+  column-gap: 1.5rem;
+  row-gap: 1.5rem;
 }
 
 .app-card {
@@ -240,13 +252,16 @@ body {
 }
 
 .app-sidebar-column {
-  width: 21rem;
-  min-width: 17rem;
+  min-width: 0;
 }
 
 .app-main-column,
 .result-column {
   min-width: 0;
+}
+
+.result-column {
+  overflow-x: hidden;
 }
 
 .side-drawer {
@@ -261,11 +276,14 @@ body {
 .side-panel {
   position: sticky;
   top: 1.25rem;
+  width: 100%;
+  max-width: 100%;
 }
 
 .side-panel-inner {
   display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
 .side-group {
@@ -273,10 +291,9 @@ body {
   gap: 1rem;
 }
 
-.range-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
+.range-columns,
+.range-columns .column {
+  min-width: 0;
 }
 
 .kingdom-filter-section {
@@ -284,6 +301,9 @@ body {
   border-radius: 18px;
   padding: 1rem;
   background: color-mix(in srgb, var(--surface) 94%, white);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .ocr-panel-note {
@@ -293,21 +313,24 @@ body {
 
 .saved-kingdom-panel {
   padding: 0.9rem 0 0;
-}
-
-.saved-kingdom-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) auto;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.saved-kingdom-grid .select {
   min-width: 0;
 }
 
-.saved-kingdom-grid.mt-3 {
-  grid-template-columns: minmax(0, 1.6fr) auto auto;
+.saved-kingdom-block {
+  min-width: 0;
+}
+
+.saved-kingdom-title {
+  margin-bottom: 0.55rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.saved-kingdom-panel .columns,
+.saved-kingdom-panel .column {
+  min-width: 0;
 }
 
 .ocr-details {
@@ -362,11 +385,13 @@ body {
 }
 
 .ocr-example-popover {
+  display: none;
   position: absolute;
   right: 0;
   top: calc(100% + 0.55rem);
   padding: 0.55rem;
-  min-width: min(42rem, 92vw);
+  width: min(40rem, 92vw);
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: 16px;
   background: color-mix(in srgb, var(--surface) 96%, white);
@@ -380,6 +405,7 @@ body {
 
 .ocr-example-wrap:hover .ocr-example-popover,
 .ocr-example-wrap:focus-within .ocr-example-popover {
+  display: block;
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
@@ -387,8 +413,8 @@ body {
 
 .ocr-example-image {
   display: block;
-  width: min(40rem, 92vw);
-  min-width: min(38rem, 88vw);
+  width: 100%;
+  min-width: 0;
   min-height: 18rem;
   max-width: 100%;
   object-fit: contain;
@@ -397,6 +423,7 @@ body {
 
 .ocr-details-body {
   padding: 0 1rem 1rem;
+  min-width: 0;
 }
 
 .ocr-note-row {
@@ -460,19 +487,8 @@ body {
   background: #fff;
 }
 
-.summary-panel {
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--border) 85%, white);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--indicator-bg) 76%, white), var(--surface));
-}
-
-.summary-panel strong,
 .result-box strong {
   color: var(--strong);
-}
-
-#summaryDetail {
-  color: var(--muted);
 }
 
 .result-box {
@@ -487,6 +503,7 @@ body {
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .pager-actions {
@@ -546,7 +563,10 @@ body {
 .table-wrap {
   border: 1px solid var(--border);
   border-radius: 18px;
-  overflow: hidden;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-wrap table {
@@ -562,6 +582,7 @@ body {
   --bulma-table-striped-row-even-background-color: var(--table-stripe);
   --bulma-table-striped-row-even-hover-background-color: var(--table-hover);
   margin: 0;
+  min-width: 32rem;
   color: var(--table-text);
   background: var(--table-row);
 }
@@ -610,8 +631,21 @@ body {
   font-size: 0.92rem;
 }
 
+.cache-note {
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .label {
   color: var(--muted);
+}
+
+.field,
+.field .control,
+.control,
+.columns,
+.column {
+  min-width: 0;
 }
 
 .input,
@@ -620,8 +654,31 @@ body {
   border-radius: 14px;
 }
 
+.select,
+.select.is-fullwidth {
+  width: 100%;
+  max-width: 100%;
+}
+
 .input,
-.select select {
+.select select,
+.textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.input,
+.select select,
+.textarea,
+.button {
+  min-height: 2.75rem;
+}
+
+.input,
+.select select,
+.textarea {
   border-color: var(--border);
   color: var(--text);
   background: #fff;
@@ -632,13 +689,80 @@ body {
 }
 
 .button.is-primary {
-  box-shadow: 0 8px 22px rgba(var(--bulma-primary-rgb), 0.28);
+  color: var(--bulma-primary-invert);
+  background: var(--bulma-primary);
+  border-color: var(--bulma-primary-dark);
+  box-shadow: 0 10px 24px rgba(var(--bulma-primary-rgb), 0.34);
+}
+
+.button {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-weight: 700;
+  border-width: 1px;
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--border) 56%, var(--bulma-primary-30, var(--bulma-primary)));
+  white-space: nowrap;
+  height: auto;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.button.is-fullwidth {
+  display: flex;
+  width: 100%;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button:focus-visible {
+  outline: 2px solid rgba(var(--bulma-primary-rgb), 0.45);
+  outline-offset: 1px;
+}
+
+.button.is-primary:hover {
+  background: var(--bulma-primary-dark);
+  color: var(--bulma-primary-dark-invert);
+  border-color: var(--bulma-primary-15, var(--bulma-primary-dark));
+  box-shadow: 0 12px 26px rgba(var(--bulma-primary-rgb), 0.38);
 }
 
 .button.is-light {
-  background: color-mix(in srgb, var(--surface-2) 70%, white);
-  border-color: var(--border);
-  color: var(--text);
+  background: var(--bulma-primary-soft);
+  border-color: color-mix(in srgb, var(--bulma-primary-30, var(--bulma-primary)) 76%, var(--border));
+  color: var(--bulma-primary-bold);
+  box-shadow: 0 6px 14px rgba(var(--bulma-primary-rgb), 0.16);
+}
+
+.button.is-light:hover {
+  background: color-mix(in srgb, var(--bulma-primary-soft) 72%, var(--bulma-primary-light));
+  border-color: var(--bulma-primary-40, var(--bulma-primary));
+  color: var(--bulma-primary-15-invert, var(--bulma-primary-dark-invert));
+  box-shadow: 0 9px 18px rgba(var(--bulma-primary-rgb), 0.2);
+}
+
+.button.is-link {
+  background: var(--bulma-link);
+  color: var(--bulma-link-invert);
+  border-color: var(--bulma-link-dark);
+  box-shadow: 0 8px 20px rgba(var(--bulma-primary-rgb), 0.3);
+}
+
+.button.is-link:hover {
+  background: var(--bulma-link-dark);
+  color: var(--bulma-link-dark-invert);
+  border-color: var(--bulma-link-15, var(--bulma-link-dark));
+}
+
+.button[disabled],
+fieldset[disabled] .button {
+  opacity: 0.58;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 .message.is-light .message-body {
@@ -649,10 +773,18 @@ body {
   display: none !important;
 }
 
-@media (max-width: 768px) {
+@media (min-width: 1024px) {
   .app-sidebar-column {
-    width: auto;
+    flex: 0 1 clamp(19rem, 24vw, 22rem);
+    min-width: 19rem;
+    max-width: clamp(18rem, 24vw, 22rem);
+  }
+}
+
+@media (max-width: 1023px) {
+  .app-sidebar-column {
     min-width: 0;
+    max-width: none;
   }
 
   .side-drawer {
@@ -694,18 +826,18 @@ body {
     top: auto;
   }
 
+  .app-layout {
+    column-gap: 0;
+    row-gap: 1.25rem;
+  }
+
   .app-header {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .range-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .saved-kingdom-grid,
-  .saved-kingdom-grid.mt-3 {
-    grid-template-columns: 1fr;
+  .range-columns {
+    --bulma-column-gap: 0.75rem;
   }
 
   .ocr-note-row {
@@ -726,5 +858,15 @@ body {
 
   .header-theme-select select {
     width: 100%;
+  }
+
+  .ocr-example-popover {
+    right: auto;
+    left: 0;
+    width: min(92vw, 22rem);
+  }
+
+  .ocr-example-image {
+    min-height: 11rem;
   }
 }

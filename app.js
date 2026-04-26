@@ -68,9 +68,6 @@
       this.refetchButton = document.getElementById("refetchButton");
       this.status = document.getElementById("status");
       this.statusBody = this.status.querySelector(".message-body");
-      this.summary = document.getElementById("summary");
-      this.requiredScrollsLabel = document.getElementById("requiredScrollsLabel");
-      this.summaryDetail = document.getElementById("summaryDetail");
       this.runtimeNotice = document.getElementById("runtimeNotice");
       this.runtimeNoticeBody = this.runtimeNotice.querySelector(".message-body");
       this.ocrPrepareButton = document.getElementById("ocrPrepareButton");
@@ -95,7 +92,6 @@
       this.saveKingdomListButton = document.getElementById("saveKingdomListButton");
       this.loadKingdomListButton = document.getElementById("loadKingdomListButton");
       this.deleteKingdomListButton = document.getElementById("deleteKingdomListButton");
-      this.savedKingdomListMeta = document.getElementById("savedKingdomListMeta");
       this.scrollMinInput = document.getElementById("scrollMinInput");
       this.scrollMaxInput = document.getElementById("scrollMaxInput");
       this.resultMeta = document.getElementById("resultMeta");
@@ -679,7 +675,6 @@
       this.initFilterOptions();
       this.renderSavedKingdomLists();
       this.bindEvents();
-      this.setStatus("待機中です。必要パワーを選んで取得してください。");
       this.setCacheInfo("キャッシュ未使用");
       this.renderRuntimeNotice();
       this.updateOcrControls();
@@ -911,10 +906,7 @@
         return;
       }
 
-      this.dom.kingdomRangeListInput.value = item.value;
-      this.state.currentPage = 1;
-      this.rerender();
-      this.updateSavedKingdomMeta(item);
+      this.applySavedKingdomListToInput(item);
       this.setStatus(`王国番号リスト「${item.name}」を読み込みました。`);
     }
 
@@ -933,7 +925,15 @@
     handleSavedKingdomSelectionChange() {
       const name = this.dom.savedKingdomListSelect.value;
       const item = this.savedKingdomLists.readAll().find((entry) => entry.name === name) || null;
-      this.updateSavedKingdomMeta(item);
+      if (!item) return;
+      this.applySavedKingdomListToInput(item);
+    }
+
+    applySavedKingdomListToInput(item) {
+      if (!item) return;
+      this.dom.kingdomRangeListInput.value = item.value;
+      this.state.currentPage = 1;
+      this.rerender();
     }
 
     getSelectedOcrFiles() {
@@ -1010,19 +1010,6 @@
       this.dom.savedKingdomListSelect.value = selectedName && items.some((item) => item.name === selectedName)
         ? selectedName
         : "";
-
-      const selectedItem = items.find((item) => item.name === this.dom.savedKingdomListSelect.value) || null;
-      this.updateSavedKingdomMeta(selectedItem);
-    }
-
-    updateSavedKingdomMeta(item) {
-      if (!item) {
-        this.dom.savedKingdomListMeta.textContent = "王国番号フィルタは名前付きで保存できます。";
-        return;
-      }
-
-      this.dom.savedKingdomListMeta.textContent =
-        `保存名: ${item.name} / 更新日時: ${this.formatDateTime(item.updatedAt)} / 内容: ${item.value}`;
     }
 
     async handleFetch(forceRefresh) {
@@ -1033,7 +1020,7 @@
       try {
         const cache = this.cacheStore.readByPower(power);
         if (!forceRefresh && this.cacheStore.isAvailable(cache, requestPlan)) {
-          this.applyCacheResult(cache, power, requestPlan, "Cookie/LocalStorage");
+          this.applyCacheResult(cache, power, requestPlan);
           return;
         }
 
@@ -1103,7 +1090,7 @@
       const requestPlan = this.api.buildRequestPlan(power);
       const cache = this.cacheStore.readByPower(power);
       if (this.cacheStore.isAvailable(cache, requestPlan)) {
-        this.applyCacheResult(cache, power, requestPlan, "Cookie/LocalStorage");
+        this.applyCacheResult(cache, power, requestPlan);
         return;
       }
 
@@ -1131,7 +1118,7 @@
       this.dom.powerSelect.value = String(power);
       const requestPlan = this.api.buildRequestPlan(power);
       if (!this.cacheStore.isAvailable(latest, requestPlan)) return;
-      this.applyCacheResult(latest, power, requestPlan, "Cookie/LocalStorage");
+      this.applyCacheResult(latest, power, requestPlan);
     }
 
     rerender() {
@@ -1155,13 +1142,9 @@
       this.state.currentPage = this.clamp(this.state.currentPage, 1, totalPages);
       const pageRows = this.filter.paginate(this.state.filteredList, this.state.currentPage, pageSize);
 
-      this.dom.summary.hidden = false;
       this.dom.filterPanel.hidden = false;
       this.dom.resultMeta.hidden = false;
-      this.dom.requiredScrollsLabel.textContent =
-        `取得件数: ${this.state.kingdomList.length.toLocaleString()} 件 / 絞り込み: ${this.state.filteredList.length.toLocaleString()} 件`;
-      this.dom.summaryDetail.textContent =
-        `power=${power.toLocaleString()}M / num=${requestPlan.num} / status=${requestPlan.status}(${this.filter.statusLabel(requestPlan.status)}) / order=${requestPlan.order}`;
+      this.dom.cacheInfo.hidden = false;
 
       this.renderTable(pageRows);
       this.renderPager(totalPages, pageSize);
@@ -1186,21 +1169,22 @@
     }
 
     renderPager(totalPages, pageSize) {
+      const fetchedCount = this.state.kingdomList.length;
       const totalCount = this.state.filteredList.length;
       const from = totalCount === 0 ? 0 : (this.state.currentPage - 1) * pageSize + 1;
       const to = totalCount === 0 ? 0 : Math.min(this.state.currentPage * pageSize, totalCount);
 
       this.dom.filteredCount.textContent =
-        `${totalCount.toLocaleString()}件中 ${from.toLocaleString()}-${to.toLocaleString()}件を表示`;
+        `取得: ${fetchedCount.toLocaleString()}件 / 絞り込み: ${totalCount.toLocaleString()}件 / 表示: ${from.toLocaleString()}-${to.toLocaleString()}件`;
       this.dom.pageIndicator.textContent = `${this.state.currentPage} / ${totalPages}`;
       this.dom.prevPageButton.disabled = this.state.currentPage <= 1 || totalCount === 0;
       this.dom.nextPageButton.disabled = this.state.currentPage >= totalPages || totalCount === 0;
     }
 
     hideResults() {
-      this.dom.summary.hidden = true;
       this.dom.filterPanel.hidden = true;
       this.dom.resultMeta.hidden = true;
+      this.dom.cacheInfo.hidden = true;
       this.dom.emptyState.hidden = true;
       this.dom.resultTable.hidden = true;
     }
@@ -1226,6 +1210,7 @@
     }
 
     setStatus(text, isError = false) {
+      this.dom.status.hidden = false;
       this.dom.statusBody.textContent = text;
       this.dom.status.className = isError
         ? "message is-danger is-light status-box"
@@ -1307,13 +1292,12 @@
       return `OCR失敗: ${message}`;
     }
 
-    applyCacheResult(cache, power, requestPlan, sourceLabel) {
+    applyCacheResult(cache, power, requestPlan) {
       this.state.kingdomList = this.filter.normalizeList(cache.kingdomList);
       this.resetFilters({ preservePageSize: true, shouldRerender: false });
       this.render(power, requestPlan);
       const requestedAtText = this.formatDateTime(cache.requestedAt);
-      this.setStatus(`キャッシュを利用しました（${requestedAtText} の取得結果）。`);
-      this.setCacheInfo(`参照元: ${sourceLabel} / 取得日時: ${requestedAtText}`);
+      this.setCacheInfo(`キャッシュを利用しました（${requestedAtText} の取得結果）。`);
     }
 
     detectBrowserName() {
