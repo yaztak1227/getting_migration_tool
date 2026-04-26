@@ -19,12 +19,14 @@
 
 ## Frontend Dependencies (CDN)
 - Bulma `1.0.4`
+- jQuery `3.7.1`
 - Axios `1.8.4`
 - Fuzzysort `3.1.0`
 - Tesseract.js `6.x`
+- Multiple Select `2.3.0`
 
 ## Theme System
-- Theme is selected from a dropdown (`themeSelect`).
+- Theme is selected from a compact dropdown (`themeSelect`) aligned at the right side of the header.
 - Available themes: `ocean`, `ivory`, `forest`, `graphite`.
 - Each theme defines a `$primary` in `hsl(...)` format in `app.js` config.
 - On theme apply, `app.js` maps `$primary` to Bulma CSS variables (`--bulma-primary-*`, `--bulma-link-*`) and palette lightness steps.
@@ -60,6 +62,7 @@
 - Desktop layout uses a fluid-width shell so the left menu + main result area can expand across the viewport.
 - On mobile/tablet narrow layouts (Bulma desktop breakpoint under `1024px`), the left menu stacks above the result area and is toggled with a drawer summary.
 - Saved-list control rows collapse to single-column on medium/small widths to avoid button overlap.
+- Kingdom status filter uses Multiple Select (`multiple-select`) over a native `select[multiple]`, showing a checkbox dropdown with search for statuses `1..4` only; labels are shown without numeric suffixes, and when none are selected, all statuses are included.
 - The sidebar column is kept between about `19rem` and `22rem` on desktop and released to `max-width: 100%` on narrower widths.
 - A visible gap is kept between the sidebar and main content on desktop, and between stacked blocks on narrower widths.
 - Form controls and buttons use `width: 100%`, `min-width: 0`, and button text wrapping so labels do not push the side panel wider.
@@ -76,10 +79,13 @@
   - saved lists can be selected/loaded/deleted later from localStorage.
   - selecting a saved list reflects its kingdom numbers directly into `kingdomRangeListInput`.
   - save controls are grouped as `現在の条件を保存`, and load/delete controls are grouped as `保存済みリストを使う` to keep the action flow clear on narrow widths.
+  - within those groups, save name + save button and load + delete buttons are arranged horizontally where space allows, and the saved-list selector expands to the parent width.
   - layout is controlled with Bulma responsive classes (`columns` / `column` / `is-*-mobile|tablet` / `is-fullwidth`) rather than custom grid CSS.
   - controls in the kingdom filter section stay within the section frame without horizontal overflow.
 - Result area is shown in the right column with pager, empty state, table, and cache info.
 - Result table stays inside the result column with horizontal scrolling when the available width is narrower than the table minimum.
+- Result table headers support client-side sorting for `王国番号`, `必要巻物`, `王国状態`, and `ランク`; sorting is applied to the full filtered result set before pagination.
+- Result table shows status labels without numeric suffixes.
 - Result metadata header merges total fetched count and display status into one line (fetched/filter/display range).
 - Cache usage note is shown as a compact small text line above the table area when results are visible (e.g. `キャッシュを利用しました（YYYY/MM/DD HH:MM:SS の取得結果）。`).
 - Empty state when no rows match.

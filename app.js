@@ -36,7 +36,6 @@
       },
     ],
     statusLabelMap: {
-      0: "制限なし",
       1: "閑散",
       2: "正常",
       3: "混雑",
@@ -103,6 +102,7 @@
       this.resultTable = document.getElementById("resultTable");
       this.resultBody = document.getElementById("resultBody");
       this.cacheInfo = document.getElementById("cacheInfo");
+      this.sortButtons = [...document.querySelectorAll(".sort-button[data-sort-key]")];
     }
   }
 
@@ -501,7 +501,7 @@
     createDefaultFilters() {
       return {
         query: "",
-        status: "all",
+        statuses: [],
         kingdomRangeList: "",
         scrollMin: "",
         scrollMax: "",
@@ -537,8 +537,10 @@
       const kingdomMatcher = this.createKingdomMatcher(filters.kingdomRangeList);
       let rows = list.filter((row) => this.matchesNumericFilters(row, filters, kingdomMatcher));
 
-      if (filters.status !== "all") {
-        rows = rows.filter((row) => row.status === Number(filters.status));
+      const selectedStatuses = this.normalizeStatusValues(filters.statuses);
+      if (selectedStatuses.length > 0) {
+        const selectedSet = new Set(selectedStatuses);
+        rows = rows.filter((row) => selectedSet.has(row.status));
       }
 
       if (!filters.query) return rows;
@@ -569,6 +571,13 @@
     normalizePageSize(value) {
       const size = Number(value);
       return this.config.pageSizeOptions.includes(size) ? size : this.config.pageSizeOptions[0];
+    }
+
+    normalizeStatusValues(values) {
+      if (!Array.isArray(values)) return [];
+      return [...new Set(values.map((value) => Number(value)).filter((value) => Number.isFinite(value)))].sort(
+        (a, b) => a - b
+      );
     }
 
     buildSearchText(row) {
@@ -662,10 +671,16 @@
         filteredList: [],
         currentPage: 1,
         filters: this.filter.createDefaultFilters(),
+        sort: {
+          key: null,
+          direction: "asc",
+        },
         ocrReady: false,
         ocrPreparing: false,
         ocrRunning: false,
         ocrCandidateKingdoms: [],
+        statusFilterUiReady: false,
+        syncingStatusFilterUi: false,
       };
     }
 
@@ -673,6 +688,7 @@
       this.themeManager.init();
       this.initPowerOptions();
       this.initFilterOptions();
+      this.initStatusFilterUi();
       this.renderSavedKingdomLists();
       this.bindEvents();
       this.setCacheInfo("キャッシュ未使用");
@@ -694,15 +710,10 @@
 
     initFilterOptions() {
       const statusFragment = document.createDocumentFragment();
-      const allOption = document.createElement("option");
-      allOption.value = "all";
-      allOption.textContent = "すべて";
-      statusFragment.appendChild(allOption);
-
       for (const [value, label] of Object.entries(this.config.statusLabelMap)) {
         const option = document.createElement("option");
         option.value = value;
-        option.textContent = `${label} (${value})`;
+        option.textContent = label;
         statusFragment.appendChild(option);
       }
 
@@ -717,6 +728,29 @@
       this.dom.statusFilter.appendChild(statusFragment);
       this.dom.pageSizeSelect.appendChild(pageSizeFragment);
       this.applyFiltersToUI();
+    }
+
+    initStatusFilterUi() {
+      if (!window.jQuery || typeof window.jQuery.fn.multipleSelect !== "function") {
+        this.state.statusFilterUiReady = false;
+        return;
+      }
+
+      window.jQuery(this.dom.statusFilter).multipleSelect({
+        selectAll: false,
+        filter: true,
+        width: "100%",
+        placeholder: "王国状態を選択",
+        minimumCountSelected: 4,
+        displayDelimiter: " / ",
+        ellipsis: true,
+        onClick: () => this.handleStatusFilterPluginChange(),
+        onCheckAll: () => this.handleStatusFilterPluginChange(),
+        onUncheckAll: () => this.handleStatusFilterPluginChange(),
+        onClear: () => this.handleStatusFilterPluginChange(),
+      });
+      this.state.statusFilterUiReady = true;
+      this.syncStatusFilterUi();
     }
 
     bindEvents() {
@@ -740,6 +774,9 @@
       this.dom.resetFiltersButton.addEventListener("click", () => this.resetFilters());
       this.dom.prevPageButton.addEventListener("click", () => this.movePage(-1));
       this.dom.nextPageButton.addEventListener("click", () => this.movePage(1));
+      for (const button of this.dom.sortButtons) {
+        button.addEventListener("click", () => this.handleSortChange(button.dataset.sortKey || ""));
+      }
     }
 
     renderRuntimeNotice() {
@@ -1065,6 +1102,27 @@
       this.rerender();
     }
 
+    handleStatusFilterPluginChange() {
+      if (this.state.syncingStatusFilterUi) return;
+      this.state.currentPage = 1;
+      this.rerender();
+    }
+
+    handleSortChange(key) {
+      if (!key) return;
+
+      if (this.state.sort.key !== key) {
+        this.state.sort = { key, direction: "asc" };
+      } else if (this.state.sort.direction === "asc") {
+        this.state.sort = { key, direction: "desc" };
+      } else {
+        this.state.sort = { key: null, direction: "asc" };
+      }
+
+      this.state.currentPage = 1;
+      this.rerender();
+    }
+
     movePage(direction) {
       this.state.currentPage += direction;
       this.rerender();
@@ -1135,7 +1193,8 @@
       }
 
       this.syncFiltersFromUI();
-      this.state.filteredList = this.filter.apply(this.state.kingdomList, this.state.filters);
+      const filteredRows = this.filter.apply(this.state.kingdomList, this.state.filters);
+      this.state.filteredList = this.sortRows(filteredRows);
 
       const pageSize = this.state.filters.pageSize;
       const totalPages = Math.max(1, Math.ceil(this.state.filteredList.length / pageSize));
@@ -1146,6 +1205,7 @@
       this.dom.resultMeta.hidden = false;
       this.dom.cacheInfo.hidden = false;
 
+      this.renderSortState();
       this.renderTable(pageRows);
       this.renderPager(totalPages, pageSize);
 
@@ -1161,10 +1221,63 @@
         tr.innerHTML = `
           <td>${row.kingdomId.toLocaleString()}</td>
           <td>${row.num.toLocaleString()}</td>
-          <td>${this.escapeHtml(this.filter.statusLabel(row.status))} (${row.status})</td>
+          <td>${this.escapeHtml(this.filter.statusLabel(row.status))}</td>
           <td>${row.rank.toLocaleString()}</td>
         `;
         this.dom.resultBody.appendChild(tr);
+      }
+    }
+
+    renderSortState() {
+      for (const button of this.dom.sortButtons) {
+        const key = button.dataset.sortKey || "";
+        const th = button.closest("th");
+        const indicator = button.querySelector(".sort-indicator");
+        const isActive = this.state.sort.key === key;
+        const isDesc = isActive && this.state.sort.direction === "desc";
+
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute(
+          "aria-label",
+          `${button.textContent.replace(/\s+/g, " ").trim()}を並び替え`
+        );
+
+        if (indicator) {
+          indicator.textContent = isActive ? (isDesc ? "▼" : "▲") : "-";
+        }
+
+        if (th) {
+          th.setAttribute("aria-sort", isActive ? (isDesc ? "descending" : "ascending") : "none");
+        }
+      }
+    }
+
+    sortRows(rows) {
+      const { key, direction } = this.state.sort;
+      if (!key) return rows;
+
+      const multiplier = direction === "desc" ? -1 : 1;
+      return [...rows].sort((a, b) => {
+        const left = this.readSortValue(a, key);
+        const right = this.readSortValue(b, key);
+        if (left < right) return -1 * multiplier;
+        if (left > right) return 1 * multiplier;
+        return a.kingdomId - b.kingdomId;
+      });
+    }
+
+    readSortValue(row, key) {
+      switch (key) {
+        case "kingdomId":
+          return row.kingdomId;
+        case "num":
+          return row.num;
+        case "status":
+          return row.status;
+        case "rank":
+          return row.rank;
+        default:
+          return row.kingdomId;
       }
     }
 
@@ -1192,7 +1305,7 @@
     syncFiltersFromUI() {
       this.state.filters = {
         query: this.dom.searchInput.value.trim(),
-        status: this.dom.statusFilter.value,
+        statuses: this.getSelectedStatusesFromUI(),
         kingdomRangeList: this.dom.kingdomRangeListInput.value.trim(),
         scrollMin: this.dom.scrollMinInput.value.trim(),
         scrollMax: this.dom.scrollMaxInput.value.trim(),
@@ -1202,11 +1315,47 @@
 
     applyFiltersToUI() {
       this.dom.searchInput.value = this.state.filters.query;
-      this.dom.statusFilter.value = this.state.filters.status;
+      const selectedStatuses = new Set(this.filter.normalizeStatusValues(this.state.filters.statuses));
+      for (const option of this.getStatusFilterOptions()) {
+        option.selected = selectedStatuses.has(Number(option.value));
+      }
+      this.syncStatusFilterUi();
       this.dom.pageSizeSelect.value = String(this.state.filters.pageSize);
       this.dom.kingdomRangeListInput.value = this.state.filters.kingdomRangeList;
       this.dom.scrollMinInput.value = this.state.filters.scrollMin;
       this.dom.scrollMaxInput.value = this.state.filters.scrollMax;
+    }
+
+    getStatusFilterOptions() {
+      return [...this.dom.statusFilter.options];
+    }
+
+    getSelectedStatusesFromUI() {
+      if (this.state.statusFilterUiReady && window.jQuery) {
+        return window.jQuery(this.dom.statusFilter)
+          .multipleSelect("getSelects")
+          .map((value) => Number(value))
+          .filter((value) => Number.isFinite(value))
+          .sort((a, b) => a - b);
+      }
+
+      return this.getStatusFilterOptions()
+        .filter((option) => option.selected)
+        .map((option) => Number(option.value))
+        .filter((value) => Number.isFinite(value))
+        .sort((a, b) => a - b);
+    }
+
+    syncStatusFilterUi() {
+      if (!this.state.statusFilterUiReady || !window.jQuery) return;
+      this.state.syncingStatusFilterUi = true;
+      try {
+        const selectedValues = this.filter.normalizeStatusValues(this.state.filters.statuses).map(String);
+        window.jQuery(this.dom.statusFilter).multipleSelect("setSelects", selectedValues);
+        window.jQuery(this.dom.statusFilter).multipleSelect("refresh");
+      } finally {
+        this.state.syncingStatusFilterUi = false;
+      }
     }
 
     setStatus(text, isError = false) {
@@ -1228,6 +1377,9 @@
       this.dom.powerSelect.disabled = isBusy;
       this.dom.pageSizeSelect.disabled = isBusy;
       this.dom.statusFilter.disabled = isBusy;
+      if (this.state.statusFilterUiReady && window.jQuery) {
+        window.jQuery(this.dom.statusFilter).multipleSelect(isBusy ? "disable" : "enable");
+      }
       this.dom.searchInput.disabled = isBusy;
       this.dom.kingdomRangeListInput.disabled = isBusy;
       this.dom.scrollMinInput.disabled = isBusy;
