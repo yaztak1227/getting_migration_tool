@@ -1,5 +1,15 @@
 {
   "code": "ja",
   "name": "Japanese",
-  "translations": {}
+  "translations": {
+    "power": "検索パワー",
+    "powerAria": "検索パワー",
+    "powerPlaceholder": "例: 3.5B または 3500M",
+    "powerCandidate": "候補から選択",
+    "powerCandidateAria": "検索パワー候補",
+    "powerCandidatePlaceholder": "候補から選択",
+    "headerInfoText": "検索パワーごとの移民対象王国一覧を取得し、そのまま検索・絞り込み・ページ表示まで行えます。ローカルの Node.js プロキシ経由で API を取得します。",
+    "noPowerCache": "この検索パワーのキャッシュはありません。取得するボタンを押してください。",
+    "invalidPowerInput": "検索パワーは {xxx.x}B または {xxxx}M 形式で入力してください（例: 3.5B）。"
+  }
 }

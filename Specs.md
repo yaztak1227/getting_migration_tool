@@ -63,8 +63,9 @@
   - On fetch: uses cache unless force refresh; force refresh pulls API.
 
 ## Power Input
-- Required power is entered in a free text input (`powerSelect`).
+- Search power is entered in a free text input (`powerSelect`).
 - A separate candidate dropdown (`powerCandidateSelect`) is provided for quick selection.
+- In the main fetch controls, `powerSelect` and `powerCandidateSelect` are shown side by side on tablet/desktop widths.
 - Accepted formats:
   - `{xxx.x}B` (up to one decimal place), e.g. `3.5B`
   - `{xxxx}M`, e.g. `3500M`

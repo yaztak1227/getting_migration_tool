@@ -27,7 +27,7 @@
                 ?
               </button>
               <div class="tooltip-card" role="note">
-                必要パワーごとの移民対象王国一覧を取得し、そのまま検索・絞り込み・ページ表示まで行えます。
+                検索パワーごとの移民対象王国一覧を取得し、そのまま検索・絞り込み・ページ表示まで行えます。
                 ローカルの Node.js プロキシ経由で API を取得します。
               </div>
             </div>
@@ -286,21 +286,27 @@
                 <div class="control-panel mb-5">
                   <div class="columns is-variable is-3 is-multiline is-vcentered">
                     <div class="column is-12-mobile is-5-tablet is-5-desktop">
-                      <label class="label" for="powerSelect">必要パワー</label>
-                      <div class="control">
-                        <input
-                          id="powerSelect"
-                          class="input is-medium"
-                          type="text"
-                          aria-label="必要パワー"
-                          autocomplete="off"
-                        />
-                      </div>
-                      <label class="label is-size-7 mt-2 mb-1" for="powerCandidateSelect">候補から選択</label>
-                      <div class="select is-fullwidth">
-                        <select id="powerCandidateSelect" aria-label="必要パワー候補">
-                          <option value="">候補から選択</option>
-                        </select>
+                      <div class="columns is-variable is-2 is-multiline power-input-row">
+                        <div class="column is-12-mobile is-7-tablet">
+                          <label class="label" for="powerSelect">検索パワー</label>
+                          <div class="control">
+                            <input
+                              id="powerSelect"
+                              class="input is-medium"
+                              type="text"
+                              aria-label="検索パワー"
+                              autocomplete="off"
+                            />
+                          </div>
+                        </div>
+                        <div class="column is-12-mobile is-5-tablet">
+                          <label class="label" for="powerCandidateSelect">候補から選択</label>
+                          <div class="select is-fullwidth">
+                            <select id="powerCandidateSelect" aria-label="検索パワー候補">
+                              <option value="">候補から選択</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div class="column is-12-mobile is-4-tablet is-4-desktop">

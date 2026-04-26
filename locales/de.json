@@ -1,5 +1,15 @@
 {
   "code": "de",
   "name": "German",
-  "translations": {}
+  "translations": {
+    "power": "Search Power",
+    "powerAria": "Search power",
+    "powerPlaceholder": "Example: 3.5B or 3500M",
+    "powerCandidate": "Select from candidates",
+    "powerCandidateAria": "Search power candidates",
+    "powerCandidatePlaceholder": "Select from candidates",
+    "headerInfoText": "Fetch migration target kingdoms by search power, then search, filter, and paginate in one screen. API data is retrieved through the local Node.js proxy.",
+    "noPowerCache": "No cache exists for this search power. Click fetch.",
+    "invalidPowerInput": "Enter search power as {xxx.x}B or {xxxx}M (example: 3.5B)."
+  }
 }
