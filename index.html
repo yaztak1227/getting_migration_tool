@@ -287,8 +287,20 @@
                   <div class="columns is-variable is-3 is-multiline is-vcentered">
                     <div class="column is-12-mobile is-5-tablet is-5-desktop">
                       <label class="label" for="powerSelect">必要パワー</label>
-                      <div class="select is-fullwidth is-medium">
-                        <select id="powerSelect" aria-label="必要パワー"></select>
+                      <div class="control">
+                        <input
+                          id="powerSelect"
+                          class="input is-medium"
+                          type="text"
+                          aria-label="必要パワー"
+                          autocomplete="off"
+                        />
+                      </div>
+                      <label class="label is-size-7 mt-2 mb-1" for="powerCandidateSelect">候補から選択</label>
+                      <div class="select is-fullwidth">
+                        <select id="powerCandidateSelect" aria-label="必要パワー候補">
+                          <option value="">候補から選択</option>
+                        </select>
                       </div>
                     </div>
                     <div class="column is-12-mobile is-4-tablet is-4-desktop">

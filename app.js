@@ -140,6 +140,10 @@
       resetFilters: "条件をリセット",
       power: "必要パワー",
       powerAria: "必要パワー",
+      powerPlaceholder: "例: 3.5B または 3500M",
+      powerCandidate: "候補から選択",
+      powerCandidateAria: "必要パワー候補",
+      powerCandidatePlaceholder: "候補から選択",
       fetch: "取得",
       fetchButton: "取得する",
       refetch: "更新",
@@ -195,6 +199,8 @@
       fetchedLatest: "最新データを取得しました。",
       cacheFromApi: "参照元: API / 取得日時: {date}",
       noPowerCache: "この必要パワーのキャッシュはありません。取得するボタンを押してください。",
+      invalidPowerInput:
+        "必要パワーは {xxx.x}B または {xxxx}M 形式で入力してください（例: 3.5B）。",
       noDisplayData: "表示可能なデータがありません。",
       sortAriaLabel: "{label}を並び替え",
       resultSummary: "取得: {fetched}件 / 絞り込み: {filtered}件 / 表示: {from}-{to}件",
@@ -273,6 +279,10 @@
       resetFilters: "Reset Filters",
       power: "Required Power",
       powerAria: "Required power",
+      powerPlaceholder: "Example: 3.5B or 3500M",
+      powerCandidate: "Select from candidates",
+      powerCandidateAria: "Required power candidates",
+      powerCandidatePlaceholder: "Select from candidates",
       fetch: "Fetch",
       fetchButton: "Fetch Data",
       refetch: "Refresh",
@@ -328,6 +338,7 @@
       fetchedLatest: "Fetched latest data.",
       cacheFromApi: "Source: API / Fetched at: {date}",
       noPowerCache: "No cache exists for this power. Click fetch.",
+      invalidPowerInput: "Enter power as {xxx.x}B or {xxxx}M (example: 3.5B).",
       noDisplayData: "No displayable data is available.",
       sortAriaLabel: "Sort by {label}",
       resultSummary: "Fetched: {fetched} / Filtered: {filtered} / Display: {from}-{to}",
@@ -499,6 +510,9 @@
       this.setText("#resetFiltersButton", "resetFilters");
       this.setText("label[for='powerSelect']", "power");
       this.setAttr("#powerSelect", "aria-label", "powerAria");
+      this.setAttr("#powerSelect", "placeholder", "powerPlaceholder");
+      this.setText("label[for='powerCandidateSelect']", "powerCandidate");
+      this.setAttr("#powerCandidateSelect", "aria-label", "powerCandidateAria");
       this.setText("label[for='fetchButton']", "fetch");
       this.setText("#fetchButton", "fetchButton");
       this.setText("label[for='refetchButton']", "refetch");
@@ -638,6 +652,7 @@
       this.languageSelect = document.getElementById("languageSelect");
       this.themeSelect = document.getElementById("themeSelect");
       this.powerSelect = document.getElementById("powerSelect");
+      this.powerCandidateSelect = document.getElementById("powerCandidateSelect");
       this.fetchButton = document.getElementById("fetchButton");
       this.refetchButton = document.getElementById("refetchButton");
       this.status = document.getElementById("status");
@@ -1279,6 +1294,7 @@
         ocrReady: false,
         ocrPreparing: false,
         ocrRunning: false,
+        currentDataPower: null,
         ocrCandidateKingdoms: [],
         exportingImage: false,
         statusFilterUiReady: false,
@@ -1309,6 +1325,7 @@
       this.config.unknownStatusLabel = this.t("unknownStatus");
       this.config.listSortLocale = this.i18n.currentLanguage();
       this.i18n.applyStaticTexts();
+      this.initPowerOptions();
       this.initFilterOptions();
       this.initStatusFilterUi();
       this.renderSavedKingdomLists(this.dom.savedKingdomListSelect.value);
@@ -1327,14 +1344,50 @@
     }
 
     initPowerOptions() {
+      this.refreshPowerOptions();
+      if (!this.dom.powerSelect.value.trim()) {
+        this.dom.powerSelect.value = formatPowerInputValue(100);
+      }
+    }
+
+    refreshPowerOptions() {
+      if (!this.dom.powerCandidateSelect) return;
+      this.dom.powerCandidateSelect.innerHTML = "";
       const fragment = document.createDocumentFragment();
-      for (let value = 100; value <= 3000; value += 100) {
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = this.t("powerCandidatePlaceholder");
+      fragment.appendChild(placeholder);
+
+      const values = new Set();
+      for (let value = 100; value <= 3000; value += 100) values.add(value);
+      for (const value of this.readCachedPowerValues()) values.add(value);
+      const sortedValues = [...values].sort((a, b) => a - b);
+
+      for (const value of sortedValues) {
         const option = document.createElement("option");
-        option.value = String(value);
+        option.value = formatPowerInputValue(value);
         option.textContent = formatPowerLabel(value);
         fragment.appendChild(option);
       }
-      this.dom.powerSelect.appendChild(fragment);
+      this.dom.powerCandidateSelect.appendChild(fragment);
+      this.dom.powerCandidateSelect.value = "";
+    }
+
+    readCachedPowerValues() {
+      const values = [];
+      const store = this.cacheStore.readStore();
+      for (const key of Object.keys(store.items || {})) {
+        const value = Number(key);
+        if (!Number.isFinite(value) || value <= 0) continue;
+        values.push(value);
+      }
+
+      const legacy = this.cacheStore.readLegacyCookie();
+      const legacyPower = Number(legacy && legacy.requestPlan ? legacy.requestPlan.power : "");
+      if (Number.isFinite(legacyPower) && legacyPower > 0) values.push(legacyPower);
+
+      return [...new Set(values)];
     }
 
     initFilterOptions() {
@@ -1394,6 +1447,7 @@
       this.dom.fetchButton.addEventListener("click", () => this.handleFetch(false));
       this.dom.refetchButton.addEventListener("click", () => this.handleFetch(true));
       this.dom.powerSelect.addEventListener("change", () => this.handlePowerChange());
+      this.dom.powerCandidateSelect.addEventListener("change", () => this.handlePowerCandidateSelect());
       this.dom.searchInput.addEventListener("input", () => this.handleFilterInput());
       this.dom.statusFilter.addEventListener("change", () => this.handleFilterInput());
       this.dom.pageSizeSelect.addEventListener("change", () => this.handlePageSizeChange());
@@ -1702,7 +1756,8 @@
     }
 
     async handleFetch(forceRefresh) {
-      const power = Number(this.dom.powerSelect.value);
+      const power = this.readPowerFromInput();
+      if (!Number.isFinite(power)) return;
       const requestPlan = this.api.buildRequestPlan(power);
       this.setBusy(true);
 
@@ -1730,6 +1785,7 @@
           },
           kingdomList: this.state.kingdomList,
         });
+        this.refreshPowerOptions();
 
         this.render(power, requestPlan);
         this.setStatus(this.t("fetchedLatest"));
@@ -1934,6 +1990,7 @@
       const chips = [
         { label: "Rows", value: String(rows.length) },
         { label: "Layout", value: rows.length >= 20 ? "Split View" : "Single View" },
+        { label: "Power", value: this.getExportPowerLabel() },
         { label: "Page", value: this.dom.pageIndicator.textContent || "-" },
         { label: "Exported", value: this.formatExportTimestamp() },
       ];
@@ -2088,6 +2145,20 @@
       return table;
     }
 
+    getExportPowerLabel() {
+      const fromState = Number(this.state.currentDataPower);
+      if (Number.isFinite(fromState) && fromState > 0) {
+        return formatPowerLabel(fromState);
+      }
+
+      const fromInput = parsePowerInput(this.dom.powerSelect.value);
+      if (Number.isFinite(fromInput) && fromInput > 0) {
+        return formatPowerLabel(fromInput);
+      }
+
+      return "-";
+    }
+
     formatExportTimestamp() {
       return new Intl.DateTimeFormat(this.i18n.currentLanguage() === "ja" ? "ja-JP" : "en-US", {
         year: "numeric",
@@ -2137,7 +2208,8 @@
     }
 
     handlePowerChange() {
-      const power = Number(this.dom.powerSelect.value);
+      const power = this.readPowerFromInput();
+      if (!Number.isFinite(power)) return;
       const requestPlan = this.api.buildRequestPlan(power);
       const cache = this.cacheStore.readByPower(power);
       if (this.cacheStore.isAvailable(cache, requestPlan)) {
@@ -2154,6 +2226,14 @@
       this.setCacheInfo(this.t("cacheUnused"));
     }
 
+    handlePowerCandidateSelect() {
+      const value = String(this.dom.powerCandidateSelect.value || "").trim();
+      if (!value) return;
+      this.dom.powerSelect.value = value;
+      this.dom.powerCandidateSelect.value = "";
+      this.handlePowerChange();
+    }
+
     restoreFromCacheOnLoad() {
       const store = this.cacheStore.readStore();
       const entries = Object.values(store.items || {}).filter((entry) => entry && entry.requestedAt);
@@ -2166,7 +2246,7 @@
       const power = Number(latest.requestPlan && latest.requestPlan.power);
       if (!Number.isFinite(power)) return;
 
-      this.dom.powerSelect.value = String(power);
+      this.dom.powerSelect.value = formatPowerInputValue(power);
       const requestPlan = this.api.buildRequestPlan(power);
       if (!this.cacheStore.isAvailable(latest, requestPlan)) return;
       this.applyCacheResult(latest, power, requestPlan);
@@ -2174,7 +2254,8 @@
 
     rerender() {
       if (this.state.kingdomList.length === 0) return;
-      const power = Number(this.dom.powerSelect.value);
+      const power = parsePowerInput(this.dom.powerSelect.value);
+      if (!Number.isFinite(power)) return;
       this.render(power, this.api.buildRequestPlan(power));
     }
 
@@ -2185,6 +2266,7 @@
         return;
       }
 
+      this.state.currentDataPower = power;
       this.syncFiltersFromUI();
       const filteredRows = this.filter.apply(this.state.kingdomList, this.state.filters);
       this.state.filteredList = this.sortRows(filteredRows);
@@ -2298,6 +2380,7 @@
       this.dom.cacheInfo.hidden = true;
       this.dom.emptyState.hidden = true;
       this.dom.resultTable.hidden = true;
+      this.state.currentDataPower = null;
       this.updateExportButtonDisabledState();
     }
 
@@ -2375,6 +2458,7 @@
       this.dom.fetchButton.disabled = isBusy;
       this.dom.refetchButton.disabled = isBusy;
       this.dom.powerSelect.disabled = isBusy;
+      this.dom.powerCandidateSelect.disabled = isBusy;
       this.dom.pageSizeSelect.disabled = isBusy;
       this.dom.statusFilter.disabled = isBusy;
       if (this.state.statusFilterUiReady && window.jQuery) {
@@ -2442,10 +2526,21 @@
 
     applyCacheResult(cache, power, requestPlan) {
       this.state.kingdomList = this.filter.normalizeList(cache.kingdomList);
+      this.dom.powerSelect.value = formatPowerInputValue(power);
       this.resetFilters({ preservePageSize: true, shouldRerender: false });
       this.render(power, requestPlan);
       const requestedAtText = this.formatDateTime(cache.requestedAt);
       this.setCacheInfo(this.t("cacheUsed", { date: requestedAtText }));
+    }
+
+    readPowerFromInput() {
+      const parsed = parsePowerInput(this.dom.powerSelect.value);
+      if (!Number.isFinite(parsed)) {
+        this.setStatus(this.t("invalidPowerInput"), true);
+        return null;
+      }
+      this.dom.powerSelect.value = formatPowerInputValue(parsed);
+      return parsed;
     }
 
     detectBrowserName() {
@@ -2467,6 +2562,42 @@
       return `${valueInMillions.toLocaleString()} M`;
     }
 
+    if (valueInMillions % 100 !== 0) {
+      return `${valueInMillions.toLocaleString()} M`;
+    }
+
     return `${(valueInMillions / 1000).toFixed(1)} B`;
+  }
+
+  function formatPowerInputValue(valueInMillions) {
+    const normalized = Number(valueInMillions);
+    if (!Number.isFinite(normalized) || normalized <= 0) return "";
+    if (normalized <= 900) return `${Math.round(normalized)}M`;
+    if (normalized % 100 !== 0) return `${Math.round(normalized)}M`;
+    return `${(normalized / 1000).toFixed(1)}B`;
+  }
+
+  function parsePowerInput(rawValue) {
+    const raw = String(rawValue || "")
+      .trim()
+      .replaceAll(",", "")
+      .replace(/\s+/g, "")
+      .toUpperCase();
+    if (!raw) return null;
+
+    const match = raw.match(/^(\d+(?:\.\d+)?)([BM])?$/);
+    if (!match) return null;
+
+    const numberPart = Number(match[1]);
+    const suffix = match[2] || "M";
+    if (!Number.isFinite(numberPart) || numberPart <= 0) return null;
+
+    if (suffix === "B") {
+      if (match[1].includes(".") && match[1].split(".")[1].length > 1) return null;
+      return Math.round(numberPart * 1000);
+    }
+
+    if (match[1].includes(".")) return null;
+    return Math.round(numberPart);
   }
 })();

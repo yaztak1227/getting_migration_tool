@@ -59,8 +59,20 @@
   - Selected language: `localStorage` (`lm_language_v1`).
 - Behavior:
   - On load: restores latest valid cache.
-  - On power select change: if matching cache exists, renders immediately.
+  - On power input change: if matching cache exists, renders immediately.
   - On fetch: uses cache unless force refresh; force refresh pulls API.
+
+## Power Input
+- Required power is entered in a free text input (`powerSelect`).
+- A separate candidate dropdown (`powerCandidateSelect`) is provided for quick selection.
+- Accepted formats:
+  - `{xxx.x}B` (up to one decimal place), e.g. `3.5B`
+  - `{xxxx}M`, e.g. `3500M`
+  - raw integer (treated as M), e.g. `3500`
+- Input is normalized internally to M units for API/cache keys.
+- Candidate dropdown includes:
+  - built-in range (`100M` to `3.0B` in 100M steps)
+  - power values found in local cache, including values above `3.0B`
 
 ## Filtering and Paging
 - Text search: fuzzy match (Fuzzysort), fallback to simple substring.
@@ -101,6 +113,7 @@
 - Result area is shown in the right column with pager, empty state, table, and cache info.
 - Result toolbar includes a button to export the currently displayed table page as a formatted PNG image.
 - Exported images use a decorated summary-card layout; when the current page has 20 or more rows, the exported image splits the table into left/right columns for easier scanning.
+- Exported image summary chips include the power used for the currently displayed fetched data.
 - Result table stays inside the result column with horizontal scrolling when the available width is narrower than the table minimum.
 - Result table headers support client-side sorting for `王国番号`, `必要巻物`, `王国状態`, and `ランク`; sorting is applied to the full filtered result set before pagination.
 - The `ランク` header includes a small `!` tooltip trigger; on hover/focus it explains that `0はランク外です`.
