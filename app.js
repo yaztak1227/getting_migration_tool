@@ -314,12 +314,39 @@
     },
   };
 
+  const LOCALE_FILES = [
+    { code: "en", file: "en.json", label: "English" },
+    { code: "ja", file: "ja.json", label: "日本語" },
+    { code: "ko", file: "ko.json", label: "한국어" },
+    { code: "zh-CN", file: "zh-CN.json", label: "简体中文" },
+    { code: "zh-TW", file: "zh-TW.json", label: "繁體中文" },
+    { code: "fr", file: "fr.json", label: "Français" },
+    { code: "de", file: "de.json", label: "Deutsch" },
+    { code: "es", file: "es.json", label: "Español" },
+    { code: "it", file: "it.json", label: "Italiano" },
+    { code: "pt", file: "pt.json", label: "Português" },
+    { code: "ru", file: "ru.json", label: "Русский" },
+    { code: "ar", file: "ar.json", label: "العربية" },
+    { code: "tr", file: "tr.json", label: "Türkçe" },
+    { code: "th", file: "th.json", label: "ไทย" },
+    { code: "vi", file: "vi.json", label: "Tiếng Việt" },
+    { code: "id", file: "id.json", label: "Bahasa Indonesia" },
+    { code: "ms", file: "ms.json", label: "Bahasa Melayu" },
+    { code: "pl", file: "pl.json", label: "Polski" },
+    { code: "uk", file: "uk.json", label: "Українська" },
+  ];
+
   class I18nManager {
     constructor(config, dom) {
       this.config = config;
       this.dom = dom;
       this.lang = "ja";
       this.onChange = null;
+      this.translations = { ...TRANSLATIONS };
+      this.supportedLanguages = LOCALE_FILES.map((item) => item.code);
+      this.localeMeta = new Map(LOCALE_FILES.map((item) => [item.code, item]));
+      this.loadedLanguages = new Set(["ja", "en"]);
+      this.loadingPromises = new Map();
     }
 
     init(onChange) {
@@ -332,33 +359,39 @@
 
     initLanguageOptions() {
       this.dom.languageSelect.innerHTML = "";
-      const options = [
-        { value: "ja", key: "languageOptionJa" },
-        { value: "en", key: "languageOptionEn" },
-      ];
-      for (const item of options) {
+      for (const item of LOCALE_FILES) {
         const option = document.createElement("option");
-        option.value = item.value;
-        option.textContent = this.t(item.key, {}, item.value);
+        option.value = item.code;
+        option.textContent = this.languageLabel(item.code);
         this.dom.languageSelect.appendChild(option);
       }
     }
 
     readLanguage() {
-      const saved = window.localStorage.getItem(this.config.languageStorageKey);
-      if (saved === "ja" || saved === "en") return saved;
+      const saved = this.normalizeLanguageCode(window.localStorage.getItem(this.config.languageStorageKey));
+      if (saved) return saved;
       const browserLang = String(navigator.language || "").toLowerCase();
-      return browserLang.startsWith("ja") ? "ja" : "en";
+      if (browserLang.startsWith("ja")) return "ja";
+      if (browserLang.startsWith("zh")) return "zh-CN";
+      return "en";
     }
 
     setLanguage(lang) {
-      this.lang = lang === "en" ? "en" : "ja";
-      this.dom.themeRoot.lang = this.lang;
+      this.lang = this.normalizeLanguageCode(lang) || "en";
+      this.applyLanguageToDocument();
       this.dom.languageSelect.value = this.lang;
       window.localStorage.setItem(this.config.languageStorageKey, this.lang);
       this.initLanguageOptions();
       this.dom.languageSelect.value = this.lang;
       if (this.onChange) this.onChange(this.lang);
+      if (this.loadedLanguages.has(this.lang)) return;
+      this.ensureLanguageLoaded(this.lang).then((loaded) => {
+        if (!loaded || this.lang !== loaded) return;
+        this.applyLanguageToDocument();
+        this.initLanguageOptions();
+        this.dom.languageSelect.value = this.lang;
+        if (this.onChange) this.onChange(this.lang);
+      });
     }
 
     currentLanguage() {
@@ -366,13 +399,14 @@
     }
 
     statusLabelMap() {
-      return this.dictionary().statusLabels || TRANSLATIONS.ja.statusLabels;
+      return this.dictionary().statusLabels || TRANSLATIONS.en.statusLabels;
     }
 
     t(key, vars = {}, langOverride = null) {
       const lang = langOverride || this.lang;
-      const dict = TRANSLATIONS[lang] || TRANSLATIONS.ja;
-      const template = key in dict ? dict[key] : TRANSLATIONS.ja[key];
+      const dict = this.dictionary(lang);
+      const fallback = this.dictionary("en");
+      const template = key in dict ? dict[key] : fallback[key];
       if (typeof template !== "string") return "";
       return this.format(template, vars);
     }
@@ -443,7 +477,7 @@
     formatDateTime(isoLike) {
       const date = new Date(isoLike);
       if (Number.isNaN(date.getTime())) return this.t("unknownDate");
-      const locale = this.lang === "en" ? "en-US" : "ja-JP";
+      const locale = this.lang === "en" ? "en-US" : this.lang;
       return date.toLocaleString(locale, {
         year: "numeric",
         month: "2-digit",
@@ -455,8 +489,79 @@
       });
     }
 
-    dictionary() {
-      return TRANSLATIONS[this.lang] || TRANSLATIONS.ja;
+    dictionary(lang = this.lang) {
+      return this.translations[lang] || this.translations.en || TRANSLATIONS.en;
+    }
+
+    languageLabel(code) {
+      const meta = this.localeMeta.get(code);
+      if (!meta) return code;
+      return meta.label || code;
+    }
+
+    normalizeLanguageCode(value) {
+      const raw = String(value || "").trim();
+      if (!raw) return "";
+      const lower = raw.toLowerCase();
+      for (const code of this.supportedLanguages) {
+        if (code.toLowerCase() === lower) return code;
+      }
+      if (lower.startsWith("zh-hant")) return "zh-TW";
+      if (lower.startsWith("zh")) return "zh-CN";
+      const short = lower.split("-")[0];
+      for (const code of this.supportedLanguages) {
+        if (code.toLowerCase() === short) return code;
+      }
+      return "";
+    }
+
+    applyLanguageToDocument() {
+      this.dom.themeRoot.lang = this.lang;
+      this.dom.themeRoot.dir = this.lang === "ar" ? "rtl" : "ltr";
+    }
+
+    async ensureLanguageLoaded(lang) {
+      const normalized = this.normalizeLanguageCode(lang);
+      if (!normalized) return "";
+      if (this.loadedLanguages.has(normalized)) return normalized;
+      if (this.loadingPromises.has(normalized)) return this.loadingPromises.get(normalized);
+
+      const promise = this.loadLanguageFile(normalized)
+        .catch((error) => {
+          console.warn(`failed to load locale file for ${normalized}`, error);
+          return normalized;
+        })
+        .finally(() => {
+          this.loadingPromises.delete(normalized);
+        });
+      this.loadingPromises.set(normalized, promise);
+      return promise;
+    }
+
+    async loadLanguageFile(lang) {
+      const meta = this.localeMeta.get(lang);
+      if (!meta) return lang;
+      const response = await window.fetch(`./locales/${meta.file}`, { cache: "no-cache" });
+      if (!response.ok) throw new Error(`locale fetch failed (${response.status})`);
+      const payload = await response.json();
+
+      const base = this.dictionary("en");
+      const external =
+        payload && payload.translations && typeof payload.translations === "object"
+          ? payload.translations
+          : {};
+      this.translations[lang] = this.mergeDictionary(base, external);
+      this.loadedLanguages.add(lang);
+      return lang;
+    }
+
+    mergeDictionary(base, override) {
+      const merged = { ...base, ...override };
+      const baseStatus = base && typeof base.statusLabels === "object" ? base.statusLabels : {};
+      const overrideStatus =
+        override && typeof override.statusLabels === "object" ? override.statusLabels : {};
+      merged.statusLabels = { ...baseStatus, ...overrideStatus };
+      return merged;
     }
 
     format(template, vars) {
@@ -1133,7 +1238,7 @@
     handleLanguageChange() {
       this.config.statusLabelMap = this.i18n.statusLabelMap();
       this.config.unknownStatusLabel = this.t("unknownStatus");
-      this.config.listSortLocale = this.i18n.currentLanguage() === "en" ? "en" : "ja";
+      this.config.listSortLocale = this.i18n.currentLanguage();
       this.i18n.applyStaticTexts();
       this.initFilterOptions();
       this.initStatusFilterUi();

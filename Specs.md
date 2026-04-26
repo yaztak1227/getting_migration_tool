@@ -12,6 +12,7 @@
 - `index.html`: Single-page entry point.
 - `styles.css`: Theme variables and UI styling.
 - `app.js`: Client logic (theme, cache, fetch, filtering, paging, rendering, browser OCR helper).
+- `locales/*.json`: Language resource placeholders (19 files: en, ja, ko, zh-CN, zh-TW, fr, de, es, it, pt, ru, ar, tr, th, vi, id, ms, pl, uk).
 - `server.js`: Local proxy to migration API endpoint.
 - `assets/examples/ocr-reference-kingdoms.png`: OCR参考画像のホバープレビュー用ファイル。
 - `lordsmobile-api-spec.md`: External API behavior memo.
@@ -35,11 +36,14 @@
 
 ## Language System (i18n)
 - Language is selected from a compact dropdown (`languageSelect`) in the header.
-- Supported languages: `ja` and `en`.
+- Supported languages: `en`, `ja`, `ko`, `zh-CN`, `zh-TW`, `fr`, `de`, `es`, `it`, `pt`, `ru`, `ar`, `tr`, `th`, `vi`, `id`, `ms`, `pl`, `uk`.
 - On first load, language defaults to browser preference (`ja*` => Japanese, otherwise English), then persists in `localStorage` key `lm_language_v1`.
 - UI labels, placeholders, button text, status/error messages, tooltip text, and runtime notice are switched via dictionary values in `app.js` (`TRANSLATIONS`).
+- For non-bundled languages, app loads `./locales/<code>.json` on language switch and merges `translations` keys onto English fallback text.
+- If locale file loading fails (e.g. direct `file://` restrictions in some browsers), app keeps working with fallback strings and still allows language selection.
 - Result/status date-time text uses locale-aware formatting (`ja-JP` / `en-US`) based on current language.
-- Kingdom status labels (`閑散/正常/混雑/過密` or `Quiet/Normal/Busy/Crowded`) are switched by language and used consistently in filter options and table rendering.
+- Document direction is switched to RTL only for Arabic (`ar`), otherwise LTR.
+- Kingdom status labels are switched by language dictionary and used consistently in filter options and table rendering.
 - Existing cache/saved-list data schema is unchanged by language switching.
 
 ## Data Fetch and Cache
