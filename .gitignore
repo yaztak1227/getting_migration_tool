@@ -7,6 +7,8 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
 playwright-*.png
 
 # next.js
@@ -19,6 +21,9 @@ playwright-*.png
 # misc
 .DS_Store
 *.pem
+
+# lambda deployment work area
+/lambda-work/
 
 # debug
 npm-debug.log*

@@ -179,7 +179,7 @@
       ocrDetectedSummary: "抽出王国番号: {candidates}",
       ocrDetectedNone: "抽出王国番号: 見つかりませんでした",
       ocrDetectedDescription:
-        "{count}枚のOCR結果から 4〜5桁の数字を候補として抽出し、5桁は末尾4桁へ正規化しました。内容を確認してから反映してください。",
+        "{count}枚のOCR結果から 4〜5桁の数字を候補として抽出し、5桁は前後の候補関係を見ながら近い4桁側へ補正しました。内容を確認してから反映してください。",
       ocrDetectedDescriptionNone:
         "OCRテキストは取得できましたが、王国番号らしい4〜5桁の候補は見つかりませんでした。",
       ocrDone: "OCRが完了しました。{count}枚分の結果をまとめています。",
@@ -318,7 +318,7 @@
       ocrDetectedSummary: "Detected Kingdom IDs: {candidates}",
       ocrDetectedNone: "Detected Kingdom IDs: none",
       ocrDetectedDescription:
-        "Extracted 4-5 digit number candidates from {count} OCR result images, and normalized 5-digit values to the last 4 digits. Verify before applying.",
+        "Extracted 4-5 digit number candidates from {count} OCR result images, and corrected each 5-digit value to the closer 4-digit side using neighboring candidates. Verify before applying.",
       ocrDetectedDescriptionNone:
         "OCR text was extracted, but no 4-5 digit kingdom-like candidates were found.",
       ocrDone: "OCR complete. Aggregated results from {count} images.",
@@ -1538,7 +1538,8 @@
 
       try {
         const allTexts = [];
-        const candidateSet = new Set();
+        const orderedCandidates = [];
+        let previousCandidate = null;
 
         for (let index = 0; index < files.length; index += 1) {
           const file = files[index];
@@ -1563,14 +1564,15 @@
             allTexts.push(`--- ${file.name} ---\n`);
           }
 
-          const candidates = this.extractKingdomCandidates(text);
+          const candidates = this.extractKingdomCandidates(text, previousCandidate);
           for (const candidate of candidates) {
-            candidateSet.add(candidate);
+            orderedCandidates.push(candidate);
+            previousCandidate = candidate;
           }
         }
 
         const mergedText = allTexts.join("\n\n").trim();
-        const candidates = [...candidateSet].sort((a, b) => a - b);
+        const candidates = [...new Set(orderedCandidates)].sort((a, b) => a - b);
         this.state.ocrCandidateKingdoms = candidates;
         this.dom.ocrDetails.open = true;
         this.dom.ocrResultPanel.hidden = false;
@@ -1704,18 +1706,75 @@
       }
     }
 
-    extractKingdomCandidates(text) {
+    extractKingdomCandidates(text, previousCandidate = null) {
       const matches = String(text || "").match(/\d{4,5}/g) || [];
       const values = [];
-      for (const token of matches) {
-        const normalizedToken = token.length === 5 ? token.slice(-4) : token;
-        const value = Number(normalizedToken);
+      let priorValue = Number.isFinite(previousCandidate) ? previousCandidate : null;
+      for (let index = 0; index < matches.length; index += 1) {
+        const token = matches[index];
+        const nextHint = this.findNextKingdomCandidateHint(matches, index + 1);
+        const value = this.normalizeKingdomCandidate(token, priorValue, nextHint);
         if (!Number.isFinite(value)) continue;
-        if (value < this.config.ocr.candidateMin || value > 9999) continue;
         values.push(value);
+        priorValue = value;
       }
 
-      return [...new Set(values)].sort((a, b) => a - b);
+      return [...new Set(values)];
+    }
+
+    normalizeKingdomCandidate(token, previousCandidate = null, nextCandidateHint = null) {
+      const text = String(token || "");
+      if (!/^\d{4,5}$/.test(text)) return null;
+
+      if (text.length === 4) {
+        const value = Number(text);
+        return this.isValidKingdomCandidate(value) ? value : null;
+      }
+
+      const frontValue = Number(text.slice(0, 4));
+      const backValue = Number(text.slice(-4));
+      const validFront = this.isValidKingdomCandidate(frontValue);
+      const validBack = this.isValidKingdomCandidate(backValue);
+
+      if (!validFront && !validBack) return null;
+      if (!validFront) return backValue;
+      if (!validBack) return frontValue;
+      if (Number.isFinite(previousCandidate) && Number.isFinite(nextCandidateHint)) {
+        const frontScore =
+          Math.abs(frontValue - previousCandidate) + Math.abs(frontValue - nextCandidateHint);
+        const backScore =
+          Math.abs(backValue - previousCandidate) + Math.abs(backValue - nextCandidateHint);
+        return frontScore <= backScore ? frontValue : backValue;
+      }
+      if (Number.isFinite(previousCandidate)) {
+        const frontDistance = Math.abs(frontValue - previousCandidate);
+        const backDistance = Math.abs(backValue - previousCandidate);
+        return frontDistance <= backDistance ? frontValue : backValue;
+      }
+      if (Number.isFinite(nextCandidateHint)) {
+        const frontDistance = Math.abs(frontValue - nextCandidateHint);
+        const backDistance = Math.abs(backValue - nextCandidateHint);
+        return frontDistance <= backDistance ? frontValue : backValue;
+      }
+
+      return backValue;
+    }
+
+    findNextKingdomCandidateHint(tokens, startIndex) {
+      for (let index = startIndex; index < tokens.length; index += 1) {
+        const hint = this.normalizeKingdomCandidate(tokens[index], null, null);
+        if (Number.isFinite(hint)) return hint;
+      }
+
+      return null;
+    }
+
+    isValidKingdomCandidate(value) {
+      return (
+        Number.isFinite(value) &&
+        value >= this.config.ocr.candidateMin &&
+        value <= 9999
+      );
     }
 
     setOcrStatus(text, isError = false) {

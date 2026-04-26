@@ -7,6 +7,7 @@
 ## Runtime Modes
 - Direct open (`file://`): UI can load, but API access may be restricted by browser security.
 - Recommended API mode: run local proxy (`server.js`) and open `http://127.0.0.1:6080`.
+- AWS Lambda mode: package the site files plus Lambda handler from `lambda-work/` and expose the Function URL as the single entrypoint.
 
 ## File Structure
 - `index.html`: Single-page entry point.
@@ -14,6 +15,7 @@
 - `app.js`: Client logic (theme, cache, fetch, filtering, paging, rendering, browser OCR helper).
 - `locales/*.json`: Language resource placeholders (19 files: en, ja, ko, zh-CN, zh-TW, fr, de, es, it, pt, ru, ar, tr, th, vi, id, ms, pl, uk).
 - `server.js`: Local proxy to migration API endpoint.
+- `lambda-work/`: AWS Lambda deployment work area (`lambda-handler.js`, `template.yaml`, packaging script, local build output).
 - `assets/examples/ocr-reference-kingdoms.png`: OCR参考画像のホバープレビュー用ファイル。
 - `lordsmobile-api-spec.md`: External API behavior memo.
 - `Agents.md`: Project operating rules.
@@ -130,9 +132,10 @@
 - OCR runs client-side through CDN-loaded `tesseract.js`.
 - First OCR preparation downloads language/model assets in the browser cache.
 - OCR candidate extraction targets 4-5 digit numbers.
-- 5-digit candidates are normalized to their trailing 4 digits before filtering.
+- 5-digit candidates are resolved to either the leading 4 digits or trailing 4 digits, choosing the side closer to neighboring accepted candidates; when only one side of context exists, that side is used as the hint.
 
 ## Constraints
 - No build step required for frontend operation.
 - Local JS/CSS files must be referenced by relative paths from `index.html`.
 - External libraries should be loaded via CDN.
+- Lambda deployment assets are maintained separately under `lambda-work/` so the direct-open frontend flow remains unchanged.
