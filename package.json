@@ -7,5 +7,8 @@
     "serve": "node server.js",
     "start:6000": "PORT=6000 node server.js",
     "start:6080": "PORT=6080 node server.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.59.1"
   }
 }

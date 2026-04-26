@@ -7,6 +7,7 @@
     cookieMaxAgeSec: 60 * 60 * 24 * 7,
     cacheValidMs: 24 * 60 * 60 * 1000,
     themeStorageKey: "lm_theme_v1",
+    savedKingdomListsStorageKey: "lm_saved_kingdom_lists_v1",
     pageSizeOptions: [30, 50, 100],
     themes: [
       {
@@ -50,6 +51,12 @@
         order: 1,
       },
     },
+    ocr: {
+      languages: "jpn+eng",
+      maxFileSizeBytes: 10 * 1024 * 1024,
+      candidateMin: 1000,
+      candidateMax: 99999,
+    },
   };
 
   class DomRefs {
@@ -66,12 +73,29 @@
       this.summaryDetail = document.getElementById("summaryDetail");
       this.runtimeNotice = document.getElementById("runtimeNotice");
       this.runtimeNoticeBody = this.runtimeNotice.querySelector(".message-body");
+      this.ocrPrepareButton = document.getElementById("ocrPrepareButton");
+      this.ocrDetails = document.getElementById("ocrDetails");
+      this.ocrImageInput = document.getElementById("ocrImageInput");
+      this.ocrRunButton = document.getElementById("ocrRunButton");
+      this.ocrApplyButton = document.getElementById("ocrApplyButton");
+      this.ocrStatus = document.getElementById("ocrStatus");
+      this.ocrStatusBody = this.ocrStatus.querySelector(".message-body");
+      this.ocrResultPanel = document.getElementById("ocrResultPanel");
+      this.ocrDetectedSummary = document.getElementById("ocrDetectedSummary");
+      this.ocrDetectedList = document.getElementById("ocrDetectedList");
+      this.ocrTextOutput = document.getElementById("ocrTextOutput");
       this.filterPanel = document.getElementById("filterPanel");
       this.searchInput = document.getElementById("searchInput");
       this.statusFilter = document.getElementById("statusFilter");
       this.pageSizeSelect = document.getElementById("pageSizeSelect");
       this.resetFiltersButton = document.getElementById("resetFiltersButton");
       this.kingdomRangeListInput = document.getElementById("kingdomRangeListInput");
+      this.kingdomListNameInput = document.getElementById("kingdomListNameInput");
+      this.savedKingdomListSelect = document.getElementById("savedKingdomListSelect");
+      this.saveKingdomListButton = document.getElementById("saveKingdomListButton");
+      this.loadKingdomListButton = document.getElementById("loadKingdomListButton");
+      this.deleteKingdomListButton = document.getElementById("deleteKingdomListButton");
+      this.savedKingdomListMeta = document.getElementById("savedKingdomListMeta");
       this.scrollMinInput = document.getElementById("scrollMinInput");
       this.scrollMaxInput = document.getElementById("scrollMaxInput");
       this.resultMeta = document.getElementById("resultMeta");
@@ -309,6 +333,52 @@
     }
   }
 
+  class SavedKingdomListStore {
+    constructor(config) {
+      this.config = config;
+    }
+
+    readAll() {
+      const raw = window.localStorage.getItem(this.config.savedKingdomListsStorageKey);
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+          .filter((item) => item && typeof item === "object")
+          .map((item) => ({
+            name: String(item.name || "").trim(),
+            value: String(item.value || "").trim(),
+            updatedAt: String(item.updatedAt || ""),
+          }))
+          .filter((item) => item.name && item.value)
+          .sort((a, b) => a.name.localeCompare(b.name, "ja"));
+      } catch (error) {
+        console.warn("saved kingdom list parse error", error);
+        return [];
+      }
+    }
+
+    writeAll(items) {
+      window.localStorage.setItem(this.config.savedKingdomListsStorageKey, JSON.stringify(items));
+    }
+
+    save(name, value) {
+      const items = this.readAll().filter((item) => item.name !== name);
+      items.push({
+        name,
+        value,
+        updatedAt: new Date().toISOString(),
+      });
+      this.writeAll(items);
+    }
+
+    remove(name) {
+      const items = this.readAll().filter((item) => item.name !== name);
+      this.writeAll(items);
+    }
+  }
+
   class MigrationApi {
     constructor(config) {
       this.config = config;
@@ -360,6 +430,70 @@
         if (Array.isArray(responseJson.results)) return responseJson.results;
       }
       return [];
+    }
+  }
+
+  class OcrManager {
+    constructor(config) {
+      this.config = config;
+      this.worker = null;
+      this.preparePromise = null;
+      this.progressHandler = null;
+    }
+
+    async prepare(onProgress) {
+      if (this.worker) {
+        if (typeof onProgress === "function") {
+          onProgress({
+            status: "ready",
+            progress: 1,
+          });
+        }
+        return this.worker;
+      }
+
+      if (this.preparePromise) {
+        this.progressHandler = onProgress;
+        return this.preparePromise;
+      }
+
+      if (!window.Tesseract || typeof window.Tesseract.createWorker !== "function") {
+        throw new Error("Tesseract.js の読み込みに失敗しました。");
+      }
+
+      this.progressHandler = onProgress;
+      this.preparePromise = (async () => {
+        const worker = await window.Tesseract.createWorker(this.config.ocr.languages, 1, {
+          logger: (message) => {
+            if (typeof this.progressHandler === "function") {
+              this.progressHandler(message);
+            }
+          },
+        });
+
+        if (window.Tesseract.PSM) {
+          await worker.setParameters({
+            tessedit_pageseg_mode: window.Tesseract.PSM.AUTO,
+            preserve_interword_spaces: "1",
+          });
+        }
+
+        this.worker = worker;
+        return worker;
+      })();
+
+      try {
+        return await this.preparePromise;
+      } finally {
+        this.preparePromise = null;
+      }
+    }
+
+    async recognize(file, onProgress) {
+      const worker = await this.prepare(onProgress);
+      this.progressHandler = onProgress;
+      const result = await worker.recognize(file);
+      return result && result.data ? result.data : { text: "" };
     }
   }
 
@@ -523,13 +657,19 @@
       this.dom = new DomRefs();
       this.themeManager = new ThemeManager(config, this.dom);
       this.cacheStore = new CacheStore(config);
+      this.savedKingdomLists = new SavedKingdomListStore(config);
       this.api = new MigrationApi(config);
+      this.ocr = new OcrManager(config);
       this.filter = new KingdomFilter(config);
       this.state = {
         kingdomList: [],
         filteredList: [],
         currentPage: 1,
         filters: this.filter.createDefaultFilters(),
+        ocrReady: false,
+        ocrPreparing: false,
+        ocrRunning: false,
+        ocrCandidateKingdoms: [],
       };
     }
 
@@ -537,10 +677,12 @@
       this.themeManager.init();
       this.initPowerOptions();
       this.initFilterOptions();
+      this.renderSavedKingdomLists();
       this.bindEvents();
       this.setStatus("待機中です。必要パワーを選んで取得してください。");
       this.setCacheInfo("キャッシュ未使用");
       this.renderRuntimeNotice();
+      this.updateOcrControls();
       this.restoreFromCacheOnLoad();
     }
 
@@ -590,8 +732,16 @@
       this.dom.statusFilter.addEventListener("change", () => this.handleFilterInput());
       this.dom.pageSizeSelect.addEventListener("change", () => this.handlePageSizeChange());
       this.dom.kingdomRangeListInput.addEventListener("input", () => this.handleFilterInput());
+      this.dom.saveKingdomListButton.addEventListener("click", () => this.handleSaveKingdomList());
+      this.dom.loadKingdomListButton.addEventListener("click", () => this.handleLoadKingdomList());
+      this.dom.deleteKingdomListButton.addEventListener("click", () => this.handleDeleteKingdomList());
+      this.dom.savedKingdomListSelect.addEventListener("change", () => this.handleSavedKingdomSelectionChange());
       this.dom.scrollMinInput.addEventListener("input", () => this.handleFilterInput());
       this.dom.scrollMaxInput.addEventListener("input", () => this.handleFilterInput());
+      this.dom.ocrPrepareButton.addEventListener("click", () => this.handlePrepareOcr());
+      this.dom.ocrImageInput.addEventListener("change", () => this.handleOcrFileChange());
+      this.dom.ocrRunButton.addEventListener("click", () => this.handleRunOcr());
+      this.dom.ocrApplyButton.addEventListener("click", () => this.applyOcrCandidatesToFilter());
       this.dom.resetFiltersButton.addEventListener("click", () => this.resetFilters());
       this.dom.prevPageButton.addEventListener("click", () => this.movePage(-1));
       this.dom.nextPageButton.addEventListener("click", () => this.movePage(1));
@@ -608,6 +758,271 @@
       this.dom.runtimeNoticeBody.innerHTML =
         `現在は <strong>file://</strong> で開かれています。${this.escapeHtml(browserName)} での直接起動は制約が多いため、` +
         `<strong>http://127.0.0.1:6080</strong> から開くと Node.js のローカルプロキシ経由で取得できます。`;
+    }
+
+    async handlePrepareOcr() {
+      if (this.state.ocrPreparing || this.state.ocrReady) {
+        if (this.state.ocrReady) {
+          this.setOcrStatus("OCRはすでに利用可能です。画像を選んで実行してください。");
+        }
+        return;
+      }
+
+      this.state.ocrPreparing = true;
+      this.updateOcrControls();
+      this.setOcrStatus("OCRモデルを準備しています。初回は少し時間がかかります。");
+
+      try {
+        await this.ocr.prepare((message) => this.renderOcrProgress(message, "download"));
+        this.state.ocrReady = true;
+        this.setOcrStatus("OCRの準備が完了しました。画像を選んでOCRできます。");
+      } catch (error) {
+        console.error(error);
+        this.setOcrStatus(this.buildOcrErrorMessage(error), true);
+      } finally {
+        this.state.ocrPreparing = false;
+        this.updateOcrControls();
+      }
+    }
+
+    handleOcrFileChange() {
+      const files = this.getSelectedOcrFiles();
+      if (files.length > 0) {
+        this.dom.ocrDetails.open = true;
+        this.setOcrStatus(`OCR対象画像: ${files.length}枚選択中`);
+      }
+      this.updateOcrControls();
+    }
+
+    async handleRunOcr() {
+      const files = this.getSelectedOcrFiles();
+      if (files.length === 0) {
+        this.setOcrStatus("OCRする画像を1枚以上選択してください。", true);
+        return;
+      }
+
+      for (const file of files) {
+        if (file.size > this.config.ocr.maxFileSizeBytes) {
+          this.setOcrStatus(
+            `画像サイズが大きすぎます。10MB以下の画像を選択してください: ${file.name}`,
+            true
+          );
+          return;
+        }
+      }
+
+      this.state.ocrRunning = true;
+      this.updateOcrControls();
+      this.setOcrStatus(`OCRを実行しています... (${files.length}枚)`);
+
+      try {
+        const allTexts = [];
+        const candidateSet = new Set();
+
+        for (let index = 0; index < files.length; index += 1) {
+          const file = files[index];
+          this.setOcrStatus(`OCRを実行しています... (${index + 1}/${files.length}: ${file.name})`);
+          const result = await this.ocr.recognize(file, (message) =>
+            this.renderOcrProgress(message, "recognize", {
+              current: index + 1,
+              total: files.length,
+              fileName: file.name,
+            })
+          );
+          const text = String(result.text || "").trim();
+          if (text) {
+            allTexts.push(`--- ${file.name} ---\n${text}`);
+          } else {
+            allTexts.push(`--- ${file.name} ---\n`);
+          }
+
+          const candidates = this.extractKingdomCandidates(text);
+          for (const candidate of candidates) {
+            candidateSet.add(candidate);
+          }
+        }
+
+        const mergedText = allTexts.join("\n\n").trim();
+        const candidates = [...candidateSet].sort((a, b) => a - b);
+        this.state.ocrCandidateKingdoms = candidates;
+        this.dom.ocrDetails.open = true;
+        this.dom.ocrResultPanel.hidden = false;
+        this.dom.ocrTextOutput.value = mergedText;
+        this.dom.ocrDetectedSummary.textContent =
+          candidates.length > 0
+            ? `抽出王国番号: ${candidates.join(", ")}`
+            : "抽出王国番号: 見つかりませんでした";
+        this.dom.ocrDetectedList.textContent =
+          candidates.length > 0
+            ? `${files.length}枚のOCR結果から 4〜5桁の数字を候補として抽出し、5桁は末尾4桁へ正規化しました。内容を確認してから反映してください。`
+            : "OCRテキストは取得できましたが、王国番号らしい4〜5桁の候補は見つかりませんでした。";
+        this.setOcrStatus(`OCRが完了しました。${files.length}枚分の結果をまとめています。`);
+      } catch (error) {
+        console.error(error);
+        this.setOcrStatus(this.buildOcrErrorMessage(error), true);
+      } finally {
+        this.state.ocrRunning = false;
+        this.updateOcrControls();
+      }
+    }
+
+    applyOcrCandidatesToFilter() {
+      if (this.state.ocrCandidateKingdoms.length === 0) {
+        this.setOcrStatus("反映できる王国番号候補がありません。", true);
+        return;
+      }
+
+      this.dom.kingdomRangeListInput.value = this.state.ocrCandidateKingdoms.join(" ");
+      this.state.currentPage = 1;
+      this.rerender();
+      this.dom.ocrDetails.open = false;
+      this.setOcrStatus("OCRで抽出した王国番号候補をフィルタに反映しました。");
+    }
+
+    handleSaveKingdomList() {
+      const name = this.dom.kingdomListNameInput.value.trim();
+      const value = this.dom.kingdomRangeListInput.value.trim();
+      if (!name) {
+        this.setStatus("保存名を入力してください。", true);
+        return;
+      }
+      if (!value) {
+        this.setStatus("保存する王国番号リストが空です。", true);
+        return;
+      }
+
+      this.savedKingdomLists.save(name, value);
+      this.renderSavedKingdomLists(name);
+      this.dom.kingdomListNameInput.value = "";
+      this.setStatus(`王国番号リスト「${name}」を保存しました。`);
+    }
+
+    handleLoadKingdomList() {
+      const name = this.dom.savedKingdomListSelect.value;
+      if (!name) {
+        this.setStatus("読み込む保存済みリストを選択してください。", true);
+        return;
+      }
+
+      const item = this.savedKingdomLists.readAll().find((entry) => entry.name === name);
+      if (!item) {
+        this.setStatus("選択した保存済みリストが見つかりません。", true);
+        this.renderSavedKingdomLists();
+        return;
+      }
+
+      this.dom.kingdomRangeListInput.value = item.value;
+      this.state.currentPage = 1;
+      this.rerender();
+      this.updateSavedKingdomMeta(item);
+      this.setStatus(`王国番号リスト「${item.name}」を読み込みました。`);
+    }
+
+    handleDeleteKingdomList() {
+      const name = this.dom.savedKingdomListSelect.value;
+      if (!name) {
+        this.setStatus("削除する保存済みリストを選択してください。", true);
+        return;
+      }
+
+      this.savedKingdomLists.remove(name);
+      this.renderSavedKingdomLists();
+      this.setStatus(`王国番号リスト「${name}」を削除しました。`);
+    }
+
+    handleSavedKingdomSelectionChange() {
+      const name = this.dom.savedKingdomListSelect.value;
+      const item = this.savedKingdomLists.readAll().find((entry) => entry.name === name) || null;
+      this.updateSavedKingdomMeta(item);
+    }
+
+    getSelectedOcrFiles() {
+      return this.dom.ocrImageInput.files ? [...this.dom.ocrImageInput.files] : [];
+    }
+
+    renderOcrProgress(message, mode, context = {}) {
+      if (!message || typeof message !== "object") return;
+
+      const status = String(message.status || "");
+      const progress = Number(message.progress);
+      const percent = Number.isFinite(progress) ? ` ${Math.round(progress * 100)}%` : "";
+
+      if (mode === "download") {
+        this.setOcrStatus(`OCRモデル準備中: ${status || "downloading"}${percent}`);
+        return;
+      }
+
+      if (mode === "recognize") {
+        const prefix =
+          Number.isFinite(context.current) && Number.isFinite(context.total)
+            ? `(${context.current}/${context.total}${context.fileName ? `: ${context.fileName}` : ""}) `
+            : "";
+        this.setOcrStatus(`OCR実行中: ${prefix}${status || "processing"}${percent}`);
+      }
+    }
+
+    extractKingdomCandidates(text) {
+      const matches = String(text || "").match(/\d{4,5}/g) || [];
+      const values = [];
+      for (const token of matches) {
+        const normalizedToken = token.length === 5 ? token.slice(-4) : token;
+        const value = Number(normalizedToken);
+        if (!Number.isFinite(value)) continue;
+        if (value < this.config.ocr.candidateMin || value > 9999) continue;
+        values.push(value);
+      }
+
+      return [...new Set(values)].sort((a, b) => a - b);
+    }
+
+    setOcrStatus(text, isError = false) {
+      this.dom.ocrStatusBody.textContent = text;
+      this.dom.ocrStatus.className = isError
+        ? "message is-danger is-light status-box mt-4"
+        : "message is-light status-box mt-4";
+    }
+
+    updateOcrControls() {
+      const hasFile = this.getSelectedOcrFiles().length > 0;
+      this.dom.ocrPrepareButton.disabled = this.state.ocrPreparing || this.state.ocrRunning || this.state.ocrReady;
+      this.dom.ocrImageInput.disabled = this.state.ocrPreparing || this.state.ocrRunning;
+      this.dom.ocrRunButton.disabled =
+        this.state.ocrPreparing || this.state.ocrRunning || !this.state.ocrReady || !hasFile;
+      this.dom.ocrApplyButton.disabled = this.state.ocrRunning || this.state.ocrCandidateKingdoms.length === 0;
+    }
+
+    renderSavedKingdomLists(selectedName = "") {
+      const items = this.savedKingdomLists.readAll();
+      this.dom.savedKingdomListSelect.innerHTML = "";
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "保存済みリストを選択";
+      this.dom.savedKingdomListSelect.appendChild(placeholder);
+
+      for (const item of items) {
+        const option = document.createElement("option");
+        option.value = item.name;
+        option.textContent = item.name;
+        this.dom.savedKingdomListSelect.appendChild(option);
+      }
+
+      this.dom.savedKingdomListSelect.value = selectedName && items.some((item) => item.name === selectedName)
+        ? selectedName
+        : "";
+
+      const selectedItem = items.find((item) => item.name === this.dom.savedKingdomListSelect.value) || null;
+      this.updateSavedKingdomMeta(selectedItem);
+    }
+
+    updateSavedKingdomMeta(item) {
+      if (!item) {
+        this.dom.savedKingdomListMeta.textContent = "王国番号フィルタは名前付きで保存できます。";
+        return;
+      }
+
+      this.dom.savedKingdomListMeta.textContent =
+        `保存名: ${item.name} / 更新日時: ${this.formatDateTime(item.updatedAt)} / 内容: ${item.value}`;
     }
 
     async handleFetch(forceRefresh) {
@@ -882,6 +1297,14 @@
       }
 
       return `取得失敗: ${message}`;
+    }
+
+    buildOcrErrorMessage(error) {
+      const message = String(error && error.message ? error.message : "不明なエラー");
+      if (window.location.protocol === "file:") {
+        return `${this.detectBrowserName()} で file:// から開いているため OCR ダウンロードに失敗した可能性があります。http://127.0.0.1:6080 から開き直してください。`;
+      }
+      return `OCR失敗: ${message}`;
     }
 
     applyCacheResult(cache, power, requestPlan, sourceLabel) {
