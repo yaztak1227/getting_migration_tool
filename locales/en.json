@@ -10,6 +10,8 @@
     "powerCandidatePlaceholder": "Select from candidates",
     "headerInfoText": "Fetch migration target kingdoms by search power, then search, filter, and paginate in one screen. API data is retrieved through the local Node.js proxy.",
     "noPowerCache": "No cache exists for this search power. Click fetch.",
-    "invalidPowerInput": "Enter search power as {xxx.x}B or {xxxx}M (example: 3.5B)."
+    "invalidPowerInput": "Enter search power as {xxx.x}B or {xxxx}M (example: 3.5B).",
+    "ocrDetectedDescription": "Extracted 4-5 digit number candidates from {count} OCR result images, and corrected each 5-digit value to the closer 4-digit side using neighboring candidates. Verify before applying.",
+    "ocrDetectedDescriptionNone": "OCR text was extracted, but no 4-5 digit kingdom-like candidates were found."
   }
 }
