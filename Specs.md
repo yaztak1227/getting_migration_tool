@@ -85,6 +85,7 @@
 - Result area is shown in the right column with pager, empty state, table, and cache info.
 - Result table stays inside the result column with horizontal scrolling when the available width is narrower than the table minimum.
 - Result table headers support client-side sorting for `王国番号`, `必要巻物`, `王国状態`, and `ランク`; sorting is applied to the full filtered result set before pagination.
+- The `ランク` header includes a small `!` tooltip trigger; on hover/focus it explains that `0はランク外です`.
 - Result table shows status labels without numeric suffixes.
 - Result metadata header merges total fetched count and display status into one line (fetched/filter/display range).
 - Cache usage note is shown as a compact small text line above the table area when results are visible (e.g. `キャッシュを利用しました（YYYY/MM/DD HH:MM:SS の取得結果）。`).

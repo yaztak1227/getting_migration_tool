@@ -352,10 +352,23 @@
                           </button>
                         </th>
                         <th id="sortRankHeader" scope="col" aria-sort="none">
-                          <button class="sort-button" type="button" data-sort-key="rank">
-                            <span>ランク</span>
-                            <span class="sort-indicator" aria-hidden="true">-</span>
-                          </button>
+                          <div class="sort-header-group">
+                            <button class="sort-button" type="button" data-sort-key="rank">
+                              <span>ランク</span>
+                              <span class="sort-indicator" aria-hidden="true">-</span>
+                            </button>
+                            <span class="header-tooltip">
+                              <button
+                                class="header-tooltip-trigger"
+                                type="button"
+                                aria-label="ランク0の説明を表示"
+                                aria-describedby="rankZeroTooltip"
+                              >
+                                !
+                              </button>
+                              <span id="rankZeroTooltip" class="header-tooltip-bubble" role="tooltip">0はランク外です</span>
+                            </span>
+                          </div>
                         </th>
                       </tr>
                     </thead>
