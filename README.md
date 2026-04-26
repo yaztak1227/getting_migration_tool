@@ -1,22 +1,10 @@
 # getting_migration_tool
 
-## OCR補助
+- [日本語 README](./README.ja.md)
+- [English README](./README.en.md)
 
-このツールには、`ogwata/ndlocr-lite-web-ai` の「ブラウザ側でOCR資産をダウンロードして使う」体験を参考にした OCR 補助UI を追加しています。
+Lords Mobile の移民対象王国を検索・絞り込みするための、セットアップ最小構成のツールです。  
+This is a minimal-setup tool for searching and filtering Lords Mobile migration target kingdoms.
 
-- OCR欄は王国番号フィルタの直下にある「画像から読み込む」折りたたみオプションです。
-- `画像例` にホバーすると、同梱した参考画像をプレビューできます。
-- `OCRをダウンロード`
-  - ブラウザ内で OCR 用リソースを事前準備します。
-- `画像をOCR`
-  - 複数画像から文字を順番に抽出します。
-- `フィルタへ反映`
-  - OCR結果から抽出した 4〜5 桁の王国番号候補を王国番号フィルタへ流し込みます。
-  - 5 桁の数字は末尾 4 桁に正規化して反映します。
-
-## 王国番号リスト保存
-
-- 王国番号フィルタ欄は `localStorage` に名前付きで保存できます。
-- 保存したリストはあとから選んで読み込み・削除できます。
-
-初回の OCR 準備は数十秒かかる場合があります。`file://` 直開きでも通常UIは見えますが、OCRが失敗する場合は `npm run start` 後に `http://127.0.0.1:6080` から開く運用を推奨します。
+このリポジトリは、ダウンロード後に `index.html` を直接開いて使い始められる構成を優先しています。  
+The repository is designed so you can start by opening `index.html` directly after downloading it.
