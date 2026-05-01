@@ -31,7 +31,7 @@ test.describe("OCR helper", () => {
       }
     });
 
-    await page.getByRole("button", { name: "OCRをダウンロード" }).click();
+    await page.locator("#ocrPrepareButton").click();
     await expect(page.locator("#ocrStatus .message-body")).toHaveText(
       "OCRの準備が完了しました。画像を選んでOCRできます。",
       { timeout: 120000 }
@@ -40,14 +40,14 @@ test.describe("OCR helper", () => {
     await page.locator("#ocrImageInput").setInputFiles(referenceImagePath);
     await expect(page.locator("#ocrRunButton")).toBeEnabled();
 
-    await page.getByRole("button", { name: "画像をOCR" }).click();
+    await page.locator("#ocrRunButton").click();
     await expect(page.locator("#ocrStatus .message-body")).toHaveText(
       "OCRが完了しました。1枚分の結果をまとめています。",
       { timeout: 120000 }
     );
 
     await expect(page.locator("#ocrApplyButton")).toBeEnabled();
-    await page.getByRole("button", { name: "フィルタへ反映" }).click();
+    await page.locator("#ocrApplyButton").click();
 
     await expect(page.locator("#kingdomRangeListInput")).toHaveValue(expectedKingdomList);
     await expect(page.locator("#ocrStatus .message-body")).toHaveText(

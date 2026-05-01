@@ -2219,7 +2219,9 @@
     }
 
     formatExportTimestamp() {
-      return new Intl.DateTimeFormat(this.i18n.currentLanguage() === "ja" ? "ja-JP" : "en-US", {
+      const currentLanguage = this.i18n.currentLanguage();
+      const locale = currentLanguage === "en" ? "en-US" : currentLanguage;
+      return new Intl.DateTimeFormat(locale, {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",

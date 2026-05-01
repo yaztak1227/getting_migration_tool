@@ -44,6 +44,7 @@
 - On first load, language defaults to browser preference (`ja*` => Japanese, otherwise English), then persists in `localStorage` key `lm_language_v1`.
 - UI labels, placeholders, button text, status/error messages, tooltip text, and runtime notice are switched via dictionary values in `app.js` (`TRANSLATIONS`).
 - For non-bundled languages, app loads `./locales/<code>.json` on language switch and merges `translations` keys onto English fallback text.
+- Supported non-bundled locale files contain localized core UI labels (title, search/filter controls, primary actions, status labels) so switching is visibly reflected even before less-common fallback strings are needed.
 - If locale file loading fails (e.g. direct `file://` restrictions in some browsers), app keeps working with fallback strings and still allows language selection.
 - Result/status date-time text uses locale-aware formatting (`ja-JP` / `en-US`) based on current language.
 - Document direction is switched to RTL only for Arabic (`ar`), otherwise LTR.
@@ -139,3 +140,6 @@
 - Local JS/CSS files must be referenced by relative paths from `index.html`.
 - External libraries should be loaded via CDN.
 - Lambda deployment assets are maintained separately under `lambda-work/` so the direct-open frontend flow remains unchanged.
+
+## Verification
+- Playwright E2E covers representative non-English locale switching (`fr`, `ko`, `zh-CN`, `ar`) and checks document language, direction, title, and primary action labels after switching.
