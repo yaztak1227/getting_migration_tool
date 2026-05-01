@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="section">
+    <main id="mainSearchPage" class="section">
       <div class="container is-fluid app-shell">
         <header class="app-header mb-4">
           <div class="header-left">
@@ -44,7 +44,7 @@
           </div>
         </header>
 
-        <div class="columns app-layout is-desktop is-variable is-5">
+        <div id="searchContent" class="columns app-layout is-desktop is-variable is-5">
           <div class="column is-12-tablet is-4-desktop is-3-widescreen app-sidebar-column">
             <details id="filterPanel" class="side-drawer" open hidden>
               <summary class="side-drawer-toggle">検索メニュー</summary>
@@ -344,6 +344,9 @@
                       <button id="exportTableImageButton" class="button is-info is-light" type="button" disabled>
                         表を画像出力
                       </button>
+                      <button id="openRankChartButton" class="button is-link is-light" type="button">
+                        グラフに表示
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -408,12 +411,68 @@
       </div>
     </main>
 
+    <main id="rankChartPage" class="section" hidden>
+      <div class="container is-fluid app-shell">
+        <section class="card app-card">
+          <header class="rank-chart-page-head">
+            <div>
+              <p id="rankChartTitle" class="title is-4 mb-1">ランキング分布図</p>
+              <p id="rankChartPageNote" class="foot-note mb-0">キャッシュ済みデータから100M刻みの分布を表示します。</p>
+            </div>
+            <button id="backToSearchButton" class="button is-light" type="button">検索へ戻る</button>
+          </header>
+          <div class="card-content p-5">
+          <div class="rank-chart-grid">
+            <div class="rank-chart-controls">
+              <div class="field">
+                <label id="rankChartCachedPowersLabel" class="label" for="rankChartPowerList">
+                  キャッシュ済みリスト
+                </label>
+                <div class="select is-multiple is-fullwidth">
+                  <select id="rankChartPowerList" multiple size="8"></select>
+                </div>
+              </div>
+              <div class="field">
+                <label id="rankChartPowerRangeLabel" class="label" for="rankChartPowerRangeInput">
+                  パワー範囲
+                </label>
+                <input
+                  id="rankChartPowerRangeInput"
+                  class="input"
+                  type="text"
+                  placeholder="例: 1.0-2.0B または 1000M 1100M"
+                  autocomplete="off"
+                />
+              </div>
+              <div class="field">
+                <label id="rankChartKingdomLabel" class="label" for="rankChartKingdomInput">王国番号（最大3つ）</label>
+                <input
+                  id="rankChartKingdomInput"
+                  class="input"
+                  type="text"
+                  placeholder="例: 1234 1235 1236"
+                  autocomplete="off"
+                />
+              </div>
+              <button id="renderRankChartButton" class="button is-primary is-fullwidth" type="button">
+                グラフを作成
+              </button>
+              <p id="rankChartStatus" class="foot-note mt-3"></p>
+            </div>
+            <div id="rankChartCanvasList" class="rank-chart-canvas-list"></div>
+          </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://unpkg.com/multiple-select@2.3.0/dist/multiple-select.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.8.4/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fuzzysort@3.1.0/fuzzysort.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@6/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

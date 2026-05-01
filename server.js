@@ -27,7 +27,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const safePath = pathname === "/" ? "/index.html" : pathname;
+  const safePath = resolveStaticPath(pathname);
   const resolvedPath = path.resolve(ROOT_DIR, `.${safePath}`);
 
   if (!resolvedPath.startsWith(ROOT_DIR)) {
@@ -50,6 +50,25 @@ const server = http.createServer(async (req, res) => {
     res.end(data);
   });
 });
+
+function resolveStaticPath(pathname) {
+  if (pathname === "/" || pathname === "/ranking" || pathname.startsWith("/ranking/") && !path.extname(pathname)) {
+    return "/index.html";
+  }
+
+  if (pathname.startsWith("/ranking/")) {
+    const parts = pathname.split("/").filter(Boolean);
+    const assetStart = parts.findIndex((part) =>
+      ["app.js", "styles.css", "locales", "assets"].includes(part)
+    );
+    if (assetStart >= 0) {
+      return `/${parts.slice(assetStart).join("/")}`;
+    }
+    return "/index.html";
+  }
+
+  return pathname;
+}
 
 async function handleMigrationProxy(req, res) {
   try {

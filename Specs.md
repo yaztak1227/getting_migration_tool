@@ -28,9 +28,11 @@
 - Tesseract.js `6.x`
 - Multiple Select `2.3.0`
 - html2canvas `1.4.1`
+- Chart.js `4.4.8`
 
 ## Theme System
 - Theme is selected from a compact dropdown (`themeSelect`) aligned at the right side of the header.
+- The header is shared by the search page and ranking distribution page, so theme switching remains available on both views.
 - Available themes: `ocean`, `ivory`, `forest`, `graphite`, `sunset`, `lavender`, `lagoon`, `rosewood`.
 - Each theme defines a `$primary` in `hsl(...)` format in `app.js` config.
 - On theme apply, `app.js` maps `$primary` to Bulma CSS variables (`--bulma-primary-*`, `--bulma-link-*`) and palette lightness steps.
@@ -40,6 +42,7 @@
 
 ## Language System (i18n)
 - Language is selected from a compact dropdown (`languageSelect`) in the header.
+- The header is shared by the search page and ranking distribution page, so language switching remains available on both views.
 - Supported languages: `en`, `ja`, `ko`, `zh-CN`, `zh-TW`, `fr`, `de`, `es`, `it`, `pt`, `ru`, `ar`, `tr`, `th`, `vi`, `id`, `ms`, `pl`, `uk`.
 - On first load, language defaults to browser preference (`ja*` => Japanese, otherwise English), then persists in `localStorage` key `lm_language_v1`.
 - UI labels, placeholders, button text, status/error messages, tooltip text, and runtime notice are switched via dictionary values in `app.js` (`TRANSLATIONS`).
@@ -64,6 +67,7 @@
   - On load: restores latest valid cache.
   - On power input change: if matching cache exists, renders immediately.
   - On fetch: uses cache unless force refresh; force refresh pulls API.
+  - When the power input is a range such as `1.0-2.0B`, fetch runs in 100M steps and stores each power result in the same cache store.
 
 ## Power Input
 - Search power is entered in a free text input (`powerSelect`).
@@ -73,6 +77,7 @@
   - `{xxx.x}B` (up to one decimal place), e.g. `3.5B`
   - `{xxxx}M`, e.g. `3500M`
   - raw integer (treated as M), e.g. `3500`
+- Fetch also accepts power ranges such as `1.0-2.0B`, `1000-2000M`, or separated power lists; ranges are expanded in 100M steps.
 - Input is normalized internally to M units for API/cache keys.
 - Candidate dropdown includes:
   - built-in range (`100M` to `3.0B` in 100M steps)
@@ -116,6 +121,12 @@
   - controls in the kingdom filter section stay within the section frame without horizontal overflow.
 - Result area is shown in the right column with pager, empty state, table, and cache info.
 - Result toolbar includes a button to export the currently displayed table page as a formatted PNG image.
+- Result toolbar includes a `グラフに表示` button that navigates to the ranking distribution page.
+- The ranking distribution page is shown when the URL path is `/ranking` or `/ranking/<power-selection>/<kingdom-ids>`. It also accepts query parameters such as `/ranking?power=1.0-2.0B&kingdom=1234,1235`.
+- The ranking distribution page keeps the same shared header as the search page, including language and theme controls.
+- The ranking distribution page lists cached powers, accepts either multiple cached selections or a direct power/range input, and asks for 1-3 kingdom IDs.
+- Ranking distribution uses cached data only. Selected powers or direct ranges are expanded to 100M steps between the minimum and maximum power, and each 100M band is shown in the chart. If the target kingdom has non-zero ranks at both thresholds, the chart plots the absolute rank difference as the number of players in that power band; unchanged ranks are plotted as `0`. Missing cache or a threshold with rank `0` is plotted as `0` for that 100M band so the axis remains continuous.
+- The ranking distribution chart is a Chart.js bar chart. Up to 3 kingdom IDs are rendered as separate charts. Its selection state is reflected in the URL path as `/ranking/<power-selection>/<kingdom-ids>` so the same cached chart can be reopened repeatedly in local server mode. Query parameters are also parsed on direct open.
 - Exported images use a decorated summary-card layout; when the current page has 20 or more rows, the exported image splits the table into left/right columns for easier scanning.
 - Exported image summary chips include the power used for the currently displayed fetched data.
 - Result table stays inside the result column with horizontal scrolling when the available width is narrower than the table minimum.

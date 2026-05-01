@@ -153,6 +153,26 @@
       nextPage: "次へ",
       exportTableImage: "表を画像出力",
       exportTableImageAria: "現在表示している表を画像として保存",
+      rankChartButton: "グラフに表示",
+      rankChartTitle: "ランキング分布図",
+      rankChartPageNote: "キャッシュ済みデータから100M刻みの分布を表示します。",
+      rankChartCloseAria: "閉じる",
+      rankChartCachedPowers: "キャッシュ済みリスト",
+      rankChartPowerRange: "パワー範囲",
+      rankChartPowerRangePlaceholder: "例: 1.0-2.0B または 1000M 1100M",
+      rankChartKingdom: "王国番号（最大3つ）",
+      rankChartKingdomPlaceholder: "例: 1234 1235 1236",
+      rankChartRender: "グラフを作成",
+      rankChartBack: "検索へ戻る",
+      rankChartNoCachedPowers: "キャッシュ済みデータがありません。先に取得してください。",
+      rankChartInvalidSelection: "キャッシュ済みリストを複数選択するか、パワー範囲を入力してください。",
+      rankChartInvalidKingdom: "王国番号を1〜3件で入力してください。",
+      rankChartLibraryMissing: "Chart.js の読み込みに失敗しました。ネットワーク接続を確認して再読み込みしてください。",
+      rankChartNoData: "指定条件でプロットできるランキング分布がありません。",
+      rankChartRendered: "{kingdom} のランキング分布を表示しました。",
+      rankChartDatasetLabel: "人数",
+      rankChartXAxis: "パワー帯",
+      rankChartYAxis: "人数",
       emptyState: "条件に一致する王国はありません。",
       sortKingdom: "王国番号",
       sortScroll: "必要巻物",
@@ -196,6 +216,9 @@
       ocrPreparingProgress: "OCRモデル準備中: {status}{percent}",
       ocrProcessingProgress: "OCR実行中: {prefix}{status}{percent}",
       apiLoading: "APIからデータ取得中です...",
+      batchFetchLoading: "{from} から {to} まで {count}件を取得中です...",
+      batchFetchProgress: "取得中: {power} ({index}/{count})",
+      batchFetchDone: "{from} から {to} まで {count}件のキャッシュ取得が完了しました。",
       fetchedLatest: "最新データを取得しました。",
       cacheFromApi: "参照元: API / 取得日時: {date}",
       noPowerCache: "この検索パワーのキャッシュはありません。取得するボタンを押してください。",
@@ -292,6 +315,26 @@
       nextPage: "Next",
       exportTableImage: "Export Table Image",
       exportTableImageAria: "Save the currently displayed table as an image",
+      rankChartButton: "Show Chart",
+      rankChartTitle: "Rank Distribution",
+      rankChartPageNote: "Show 100M-step distributions from cached data.",
+      rankChartCloseAria: "Close",
+      rankChartCachedPowers: "Cached Lists",
+      rankChartPowerRange: "Power Range",
+      rankChartPowerRangePlaceholder: "Example: 1.0-2.0B or 1000M 1100M",
+      rankChartKingdom: "Kingdom IDs (up to 3)",
+      rankChartKingdomPlaceholder: "Example: 1234 1235 1236",
+      rankChartRender: "Create Chart",
+      rankChartBack: "Back to Search",
+      rankChartNoCachedPowers: "No cached data exists. Fetch data first.",
+      rankChartInvalidSelection: "Select multiple cached lists or enter a power range.",
+      rankChartInvalidKingdom: "Enter 1 to 3 kingdom IDs.",
+      rankChartLibraryMissing: "Chart.js failed to load. Check your network connection and reload.",
+      rankChartNoData: "No rank distribution can be plotted for the selected conditions.",
+      rankChartRendered: "Displayed rank distribution for {kingdom}.",
+      rankChartDatasetLabel: "Players",
+      rankChartXAxis: "Power band",
+      rankChartYAxis: "Players",
       emptyState: "No kingdoms match the current filters.",
       sortKingdom: "Kingdom ID",
       sortScroll: "Required Scrolls",
@@ -335,6 +378,9 @@
       ocrPreparingProgress: "Preparing OCR model: {status}{percent}",
       ocrProcessingProgress: "OCR in progress: {prefix}{status}{percent}",
       apiLoading: "Fetching data from API...",
+      batchFetchLoading: "Fetching {count} entries from {from} to {to}...",
+      batchFetchProgress: "Fetching: {power} ({index}/{count})",
+      batchFetchDone: "Cached {count} entries from {from} to {to}.",
       fetchedLatest: "Fetched latest data.",
       cacheFromApi: "Source: API / Fetched at: {date}",
       noPowerCache: "No cache exists for this search power. Click fetch.",
@@ -522,6 +568,16 @@
       this.setText("#nextPageButton", "nextPage");
       this.setText("#exportTableImageButton", "exportTableImage");
       this.setAttr("#exportTableImageButton", "aria-label", "exportTableImageAria");
+      this.setText("#openRankChartButton", "rankChartButton");
+      this.setText("#rankChartTitle", "rankChartTitle");
+      this.setText("#rankChartPageNote", "rankChartPageNote");
+      this.setText("#rankChartCachedPowersLabel", "rankChartCachedPowers");
+      this.setText("#rankChartPowerRangeLabel", "rankChartPowerRange");
+      this.setAttr("#rankChartPowerRangeInput", "placeholder", "rankChartPowerRangePlaceholder");
+      this.setText("#rankChartKingdomLabel", "rankChartKingdom");
+      this.setAttr("#rankChartKingdomInput", "placeholder", "rankChartKingdomPlaceholder");
+      this.setText("#renderRankChartButton", "rankChartRender");
+      this.setText("#backToSearchButton", "rankChartBack");
       this.setText("#emptyState .message-body", "emptyState");
       this.setText("#sortKingdomLabel", "sortKingdom");
       this.setText("#sortScrollLabel", "sortScroll");
@@ -649,6 +705,9 @@
   class DomRefs {
     constructor() {
       this.themeRoot = document.documentElement;
+      this.mainSearchPage = document.getElementById("mainSearchPage");
+      this.searchContent = document.getElementById("searchContent");
+      this.rankChartPage = document.getElementById("rankChartPage");
       this.languageSelect = document.getElementById("languageSelect");
       this.themeSelect = document.getElementById("themeSelect");
       this.powerSelect = document.getElementById("powerSelect");
@@ -688,6 +747,14 @@
       this.prevPageButton = document.getElementById("prevPageButton");
       this.nextPageButton = document.getElementById("nextPageButton");
       this.exportTableImageButton = document.getElementById("exportTableImageButton");
+      this.openRankChartButton = document.getElementById("openRankChartButton");
+      this.backToSearchButton = document.getElementById("backToSearchButton");
+      this.rankChartPowerList = document.getElementById("rankChartPowerList");
+      this.rankChartPowerRangeInput = document.getElementById("rankChartPowerRangeInput");
+      this.rankChartKingdomInput = document.getElementById("rankChartKingdomInput");
+      this.renderRankChartButton = document.getElementById("renderRankChartButton");
+      this.rankChartStatus = document.getElementById("rankChartStatus");
+      this.rankChartCanvasList = document.getElementById("rankChartCanvasList");
       this.pageIndicator = document.getElementById("pageIndicator");
       this.emptyState = document.getElementById("emptyState");
       this.resultTable = document.getElementById("resultTable");
@@ -1299,6 +1366,7 @@
         exportingImage: false,
         statusFilterUiReady: false,
         syncingStatusFilterUi: false,
+        rankCharts: [],
       };
     }
 
@@ -1314,6 +1382,7 @@
       this.renderRuntimeNotice();
       this.updateOcrControls();
       this.restoreFromCacheOnLoad();
+      this.syncPageFromUrl();
     }
 
     t(key, vars = {}) {
@@ -1341,6 +1410,9 @@
         });
       }
       this.renderRuntimeNotice();
+      if (!this.dom.rankChartPage.hidden && this.state.rankCharts.length > 0) {
+        this.handleRenderRankChart();
+      }
     }
 
     initPowerOptions() {
@@ -1466,6 +1538,10 @@
       this.dom.prevPageButton.addEventListener("click", () => this.movePage(-1));
       this.dom.nextPageButton.addEventListener("click", () => this.movePage(1));
       this.dom.exportTableImageButton.addEventListener("click", () => this.handleExportTableImage());
+      this.dom.openRankChartButton.addEventListener("click", () => this.navigateToRankChartPage());
+      this.dom.backToSearchButton.addEventListener("click", () => this.navigateToSearchPage());
+      this.dom.renderRankChartButton.addEventListener("click", () => this.handleRenderRankChart());
+      window.addEventListener("popstate", () => this.syncPageFromUrl());
       for (const button of this.dom.sortButtons) {
         button.addEventListener("click", () => this.handleSortChange(button.dataset.sortKey || ""));
       }
@@ -1670,6 +1746,308 @@
       this.rerender();
     }
 
+    navigateToRankChartPage() {
+      window.history.pushState(null, "", "/ranking");
+      this.syncPageFromUrl();
+    }
+
+    navigateToSearchPage() {
+      window.history.pushState(null, "", "/");
+      this.syncPageFromUrl();
+    }
+
+    showRankChartPage() {
+      this.renderRankChartPowerOptions();
+      this.dom.mainSearchPage.hidden = false;
+      this.dom.searchContent.hidden = true;
+      this.dom.rankChartPage.hidden = false;
+      if (this.readCachedPowerValues().length === 0) {
+        this.setRankChartStatus(this.t("rankChartNoCachedPowers"), true);
+      } else if (!this.dom.rankChartStatus.textContent) {
+        this.setRankChartStatus("");
+      }
+    }
+
+    showSearchPage() {
+      this.dom.rankChartPage.hidden = true;
+      this.dom.mainSearchPage.hidden = false;
+      this.dom.searchContent.hidden = false;
+    }
+
+    syncPageFromUrl() {
+      if (this.isRankingPath()) {
+        this.restoreRankChartFromUrl();
+        return;
+      }
+      this.showSearchPage();
+    }
+
+    isRankingPath() {
+      return window.location.pathname === "/ranking" || window.location.pathname.startsWith("/ranking/");
+    }
+
+    renderRankChartPowerOptions(selectedPowers = []) {
+      const selected = new Set(selectedPowers.map((value) => String(value)));
+      const values = this.readCachedPowerValues().sort((a, b) => a - b);
+      this.dom.rankChartPowerList.innerHTML = "";
+      for (const value of values) {
+        const option = document.createElement("option");
+        option.value = String(value);
+        option.textContent = this.buildCachedPowerOptionLabel(value);
+        option.selected = selected.has(String(value));
+        this.dom.rankChartPowerList.appendChild(option);
+      }
+    }
+
+    buildCachedPowerOptionLabel(power) {
+      const cache = this.cacheStore.readByPower(power);
+      const dateText = cache && cache.requestedAt ? this.formatDateTime(cache.requestedAt) : this.t("unknownDate");
+      return `${formatPowerLabel(power)} (${dateText})`;
+    }
+
+    handleRenderRankChart() {
+      const result = this.buildRankChartDataFromInputs();
+      if (!result) return;
+
+      this.renderRankChart(result);
+      this.updateRankChartUrl(result.powerSpec, result.kingdomIds);
+      this.setRankChartStatus(this.t("rankChartRendered", { kingdom: result.kingdomIds.join(", ") }));
+    }
+
+    buildRankChartDataFromInputs() {
+      if (!window.Chart) {
+        this.setRankChartStatus(this.t("rankChartLibraryMissing"), true);
+        return null;
+      }
+
+      const kingdomIds = parseKingdomIdsInput(this.dom.rankChartKingdomInput.value);
+      if (kingdomIds.length === 0 || kingdomIds.length > 3) {
+        this.setRankChartStatus(this.t("rankChartInvalidKingdom"), true);
+        return null;
+      }
+
+      const rangeText = this.dom.rankChartPowerRangeInput.value.trim();
+      const rangePowers = rangeText ? parsePowerRangeInput(rangeText) : null;
+      const selectedPowers = [...this.dom.rankChartPowerList.selectedOptions]
+        .map((option) => Number(option.value))
+        .filter((value) => Number.isFinite(value));
+      const powers = rangePowers && rangePowers.length > 0 ? rangePowers : selectedPowers;
+      const selectedOrRangedPowers = [...new Set(powers)].sort((a, b) => a - b);
+      if (selectedOrRangedPowers.length < 2) {
+        this.setRankChartStatus(this.t("rankChartInvalidSelection"), true);
+        return null;
+      }
+      const normalizedPowers = this.expandPowersToHundredMillionSteps(selectedOrRangedPowers);
+
+      const listsByPower = new Map();
+      for (const power of normalizedPowers) {
+        const cache = this.cacheStore.readByPower(power);
+        listsByPower.set(power, cache && cache.kingdomList ? this.filter.normalizeList(cache.kingdomList) : null);
+      }
+
+      const labels = normalizedPowers.slice(0, -1).map((power, index) =>
+        `${formatPowerLabel(power)} - ${formatPowerLabel(normalizedPowers[index + 1])}`
+      );
+      const charts = [];
+      let hasAnyCache = false;
+      for (const kingdomId of kingdomIds) {
+        const entries = normalizedPowers.map((power) => {
+          const list = listsByPower.get(power);
+          if (!list) return { power, rank: 0, hasCache: false };
+          hasAnyCache = true;
+          const row = list.find((item) => Number(item.kingdomId) === kingdomId);
+          return {
+            power,
+            rank: row ? Number(row.rank) : 0,
+            hasCache: true,
+          };
+        });
+        const counts = [];
+        for (let index = 0; index < entries.length - 1; index += 1) {
+          const current = entries[index];
+          const next = entries[index + 1];
+          const count =
+            current.hasCache && next.hasCache && current.rank > 0 && next.rank > 0
+              ? Math.abs(next.rank - current.rank)
+              : 0;
+          counts.push(count);
+        }
+        charts.push({ kingdomId, counts });
+      }
+
+      if (!hasAnyCache || labels.length === 0 || charts.length === 0) {
+        this.setRankChartStatus(this.t("rankChartNoData"), true);
+        return null;
+      }
+
+      return {
+        labels,
+        charts,
+        kingdomIds,
+        powerSpec: rangeText || selectedOrRangedPowers.map((value) => formatPowerInputValue(value)).join(","),
+      };
+    }
+
+    expandPowersToHundredMillionSteps(powers) {
+      const sorted = [...new Set(powers)]
+        .filter((value) => Number.isFinite(value) && value > 0)
+        .sort((a, b) => a - b);
+      if (sorted.length < 2) return sorted;
+
+      const min = sorted[0];
+      const max = sorted[sorted.length - 1];
+      const expanded = [];
+      const first = Math.ceil(min / 100) * 100;
+      for (let value = first; value <= max; value += 100) {
+        expanded.push(value);
+      }
+      return expanded;
+    }
+
+    renderRankChart(result) {
+      const palette = this.getExportPalette();
+      for (const chart of this.state.rankCharts) {
+        chart.destroy();
+      }
+      this.state.rankCharts = [];
+      this.dom.rankChartCanvasList.innerHTML = "";
+
+      result.charts.forEach((chartResult, index) => {
+        const wrap = document.createElement("div");
+        wrap.className = "rank-chart-canvas-wrap";
+        const canvas = document.createElement("canvas");
+        wrap.appendChild(canvas);
+        this.dom.rankChartCanvasList.appendChild(wrap);
+        const chart = new window.Chart(canvas, {
+          type: "bar",
+          data: {
+            labels: result.labels,
+            datasets: [
+              {
+                label: this.t("rankChartDatasetLabel"),
+                data: chartResult.counts,
+                backgroundColor: this.rankChartColor(index, 0.72),
+                borderColor: this.rankChartColor(index, 1),
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
+              },
+              title: {
+                display: true,
+                text: `${this.t("rankChartTitle")} K${chartResult.kingdomId}`,
+                color: palette.strong,
+                font: {
+                  size: 16,
+                  weight: "700",
+                },
+              },
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: this.t("rankChartXAxis"),
+                  color: palette.muted,
+                },
+                ticks: {
+                  color: palette.text,
+                },
+                grid: {
+                  color: palette.border,
+                },
+              },
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0,
+                  color: palette.text,
+                },
+                title: {
+                  display: true,
+                  text: this.t("rankChartYAxis"),
+                  color: palette.muted,
+                },
+                grid: {
+                  color: palette.border,
+                },
+              },
+            },
+          },
+        });
+        this.state.rankCharts.push(chart);
+      });
+    }
+
+    rankChartColor(index, alpha) {
+      const colors = [
+        this.getPrimaryRgb(),
+        "219, 85, 62",
+        "47, 133, 90",
+      ];
+      return `rgba(${colors[index % colors.length]}, ${alpha})`;
+    }
+
+    getPrimaryRgb() {
+      const raw = window.getComputedStyle(document.documentElement).getPropertyValue("--bulma-primary-rgb").trim();
+      return raw || "27, 79, 133";
+    }
+
+    setRankChartStatus(text, isError = false) {
+      this.dom.rankChartStatus.textContent = text;
+      this.dom.rankChartStatus.classList.toggle("has-text-danger", isError);
+    }
+
+    updateRankChartUrl(powerSpec, kingdomIds) {
+      const path = this.buildRankingPath(powerSpec, kingdomIds.join(","));
+      if (window.location.pathname === path) return;
+      window.history.replaceState(null, "", path);
+    }
+
+    buildRankingPath(powerSpec = "", kingdomSpec = "") {
+      const powerPart = encodeURIComponent(powerSpec || "select");
+      const kingdomPart = encodeURIComponent(kingdomSpec || "");
+      return kingdomPart ? `/ranking/${powerPart}/${kingdomPart}` : "/ranking";
+    }
+
+    restoreRankChartFromUrl() {
+      this.showRankChartPage();
+      const params = this.readRankChartUrlParams();
+      const powerSpec = params.powerSpec;
+      const kingdomSpec = params.kingdomSpec;
+      this.dom.rankChartPowerRangeInput.value = powerSpec === "select" ? "" : powerSpec;
+      this.dom.rankChartKingdomInput.value = kingdomSpec;
+      const powers = parsePowerRangeInput(powerSpec) || [];
+      this.renderRankChartPowerOptions(powers);
+      if (powerSpec && kingdomSpec) this.handleRenderRankChart();
+    }
+
+    readRankChartUrlParams() {
+      const search = new URLSearchParams(window.location.search || "");
+      const queryPower = search.get("power") || search.get("powers") || "";
+      const queryKingdom = search.get("kingdom") || search.get("kingdoms") || "";
+      if (queryPower || queryKingdom) {
+        return {
+          powerSpec: queryPower.trim(),
+          kingdomSpec: queryKingdom.trim(),
+        };
+      }
+
+      const path = String(window.location.pathname || "");
+      const match = path.match(/^\/ranking(?:\/([^/]+)(?:\/([^/]+))?)?\/?$/);
+      if (!match) return { powerSpec: "", kingdomSpec: "" };
+      return {
+        powerSpec: match[1] ? decodeURIComponent(match[1]).trim() : "",
+        kingdomSpec: match[2] ? decodeURIComponent(match[2]).trim() : "",
+      };
+    }
+
     getSelectedOcrFiles() {
       return this.dom.ocrImageInput.files ? [...this.dom.ocrImageInput.files] : [];
     }
@@ -1815,6 +2193,12 @@
     }
 
     async handleFetch(forceRefresh) {
+      const powerRange = parsePowerRangeInput(this.dom.powerSelect.value);
+      if (powerRange && powerRange.length > 1) {
+        await this.handleBatchFetch(powerRange, forceRefresh);
+        return;
+      }
+
       const power = this.readPowerFromInput();
       if (!Number.isFinite(power)) return;
       const requestPlan = this.api.buildRequestPlan(power);
@@ -1853,6 +2237,77 @@
         console.error(error);
         this.setStatus(this.buildFetchErrorMessage(error), true);
         this.hideResults();
+      } finally {
+        this.setBusy(false);
+      }
+    }
+
+    async handleBatchFetch(powers, forceRefresh) {
+      const normalizedPowers = [...new Set(powers)]
+        .filter((value) => Number.isFinite(value) && value > 0)
+        .sort((a, b) => a - b);
+      if (normalizedPowers.length === 0) {
+        this.setStatus(this.t("invalidPowerInput"), true);
+        return;
+      }
+
+      this.setBusy(true);
+      this.setStatus(this.t("batchFetchLoading", {
+        from: formatPowerLabel(normalizedPowers[0]),
+        to: formatPowerLabel(normalizedPowers[normalizedPowers.length - 1]),
+        count: normalizedPowers.length,
+      }));
+
+      let latestCache = null;
+      let latestPower = null;
+      try {
+        for (let index = 0; index < normalizedPowers.length; index += 1) {
+          const power = normalizedPowers[index];
+          const requestPlan = this.api.buildRequestPlan(power);
+          const cached = this.cacheStore.readByPower(power);
+          this.setStatus(this.t("batchFetchProgress", {
+            power: formatPowerLabel(power),
+            index: index + 1,
+            count: normalizedPowers.length,
+          }));
+
+          if (!forceRefresh && this.cacheStore.isAvailable(cached, requestPlan)) {
+            latestCache = cached;
+            latestPower = power;
+            continue;
+          }
+
+          const list = await this.api.fetchKingdomList(power);
+          const normalizedList = this.filter.normalizeList(list);
+          const nowIso = new Date().toISOString();
+          latestCache = {
+            requestedAt: nowIso,
+            requestPlan,
+            requestPayload: {
+              power,
+              num: this.config.api.defaults.num,
+              status: this.config.api.defaults.status,
+              order: this.config.api.defaults.order,
+            },
+            kingdomList: normalizedList,
+          };
+          latestPower = power;
+          this.cacheStore.write(latestCache);
+        }
+
+        this.refreshPowerOptions();
+        this.renderRankChartPowerOptions();
+        if (latestCache && Number.isFinite(latestPower)) {
+          this.applyCacheResult(latestCache, latestPower, this.api.buildRequestPlan(latestPower));
+        }
+        this.setStatus(this.t("batchFetchDone", {
+          from: formatPowerLabel(normalizedPowers[0]),
+          to: formatPowerLabel(normalizedPowers[normalizedPowers.length - 1]),
+          count: normalizedPowers.length,
+        }));
+      } catch (error) {
+        console.error(error);
+        this.setStatus(this.buildFetchErrorMessage(error), true);
       } finally {
         this.setBusy(false);
       }
@@ -2530,6 +2985,11 @@
       this.dom.scrollMinInput.disabled = isBusy;
       this.dom.scrollMaxInput.disabled = isBusy;
       this.dom.resetFiltersButton.disabled = isBusy;
+      this.dom.openRankChartButton.disabled = isBusy;
+      this.dom.rankChartPowerList.disabled = isBusy;
+      this.dom.rankChartPowerRangeInput.disabled = isBusy;
+      this.dom.rankChartKingdomInput.disabled = isBusy;
+      this.dom.renderRankChartButton.disabled = isBusy;
       this.updateExportButtonDisabledState(isBusy);
 
       if (isBusy) {
@@ -2659,6 +3119,70 @@
     }
 
     if (match[1].includes(".")) return null;
+    return Math.round(numberPart);
+  }
+
+  function parsePowerRangeInput(rawValue) {
+    const text = String(rawValue || "")
+      .trim()
+      .replace(/[〜～–—]/g, "-");
+    if (!text) return null;
+
+    const compact = text.replace(/\s+/g, "").toUpperCase();
+    const rangeMatch = compact.match(/^(\d+(?:\.\d+)?)([BM]?)-(\d+(?:\.\d+)?)([BM]?)$/);
+    if (rangeMatch) {
+      const suffix = rangeMatch[2] || rangeMatch[4] || "M";
+      const start = parsePowerNumberWithSuffix(rangeMatch[1], rangeMatch[2] || suffix);
+      const end = parsePowerNumberWithSuffix(rangeMatch[3], rangeMatch[4] || suffix);
+      if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
+      const min = Math.min(start, end);
+      const max = Math.max(start, end);
+      const powers = [];
+      const first = Math.ceil(min / 100) * 100;
+      for (let value = first; value <= max; value += 100) {
+        powers.push(value);
+      }
+      return powers;
+    }
+
+    const tokens = text.toUpperCase().split(/[,\s/]+/).filter(Boolean);
+    if (tokens.length === 0) return null;
+    const powers = [];
+    for (const token of tokens) {
+      const parsed = parsePowerInput(token);
+      if (!Number.isFinite(parsed)) return null;
+      powers.push(parsed);
+    }
+    return powers;
+  }
+
+  function parseKingdomIdsInput(rawValue) {
+    const tokens = String(rawValue || "")
+      .trim()
+      .split(/[,\s/]+/)
+      .map((token) => token.trim())
+      .filter(Boolean);
+    const values = [];
+    for (const token of tokens) {
+      if (!/^\d+$/.test(token)) return [];
+      const value = Number(token);
+      if (!Number.isFinite(value) || value <= 0) return [];
+      values.push(value);
+    }
+    return [...new Set(values)].slice(0, 4);
+  }
+
+  function parsePowerNumberWithSuffix(numberText, suffix) {
+    const raw = String(numberText || "");
+    const numberPart = Number(raw);
+    const normalizedSuffix = String(suffix || "M").toUpperCase();
+    if (!Number.isFinite(numberPart) || numberPart <= 0) return null;
+    if (normalizedSuffix === "B") {
+      if (raw.includes(".") && raw.split(".")[1].length > 1) return null;
+      return Math.round(numberPart * 1000);
+    }
+    if (raw.includes(".")) return null;
+    if (normalizedSuffix !== "M") return null;
     return Math.round(numberPart);
   }
 })();
