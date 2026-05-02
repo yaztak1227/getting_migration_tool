@@ -16,7 +16,7 @@
       <div class="container is-fluid app-shell">
         <header class="app-header mb-4">
           <div class="header-left">
-            <h1 class="title is-4 mb-0">Lordsmobile 移民王国検索</h1>
+            <h1 class="title is-4 mb-0">Lordsmobile 移民王国フィルター</h1>
             <div class="tooltip-wrap">
               <button
                 id="headerInfoButton"
@@ -27,7 +27,7 @@
                 ?
               </button>
               <div class="tooltip-card" role="note">
-                検索パワーごとの移民対象王国一覧を取得し、そのまま検索・絞り込み・ページ表示まで行えます。
+                検索パワーごとの移民対象王国一覧を取得し、そのままフィルタリング・ページ表示まで行えます。
                 ローカルの Node.js プロキシ経由で API を取得します。
               </div>
             </div>
@@ -47,18 +47,18 @@
         <div id="searchContent" class="columns app-layout is-desktop is-variable is-5">
           <div class="column is-12-tablet is-4-desktop is-3-widescreen app-sidebar-column">
             <details id="filterPanel" class="side-drawer" open hidden>
-              <summary class="side-drawer-toggle">検索メニュー</summary>
+              <summary class="side-drawer-toggle">フィルタメニュー</summary>
               <aside class="control-panel side-panel">
                 <div class="side-panel-inner">
                   <section class="side-group">
                     <section class="side-group">
                       <div class="field">
-                        <label class="label" for="searchInput">検索</label>
+                        <label class="label" for="searchInput">テキストフィルタ</label>
                         <input
                           id="searchInput"
                           class="input"
                           type="search"
-                          placeholder="王国番号・状態・ランクで検索"
+                          placeholder="王国番号・状態・ランクで絞り込み"
                           autocomplete="off"
                         />
                       </div>
@@ -419,8 +419,8 @@
               id="backToSearchButton"
               class="button is-light rank-chart-icon-only-button"
               type="button"
-              aria-label="検索へ戻る"
-              title="検索へ戻る"
+              aria-label="フィルタ画面へ戻る"
+              title="フィルタ画面へ戻る"
             >
               <span class="rank-chart-button-icon" data-lucide="arrow-left"></span>
             </button>

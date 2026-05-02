@@ -1,7 +1,7 @@
 # Project Specs
 
 ## Purpose
-- Provide a Lords Mobile migration kingdom search tool with minimal setup.
+- Provide a Lords Mobile migration kingdom filter tool with minimal setup.
 - Primary usage is opening `index.html` directly after download.
 
 ## Runtime Modes
@@ -33,7 +33,7 @@
 
 ## Theme System
 - Theme is selected from a compact dropdown (`themeSelect`) aligned at the right side of the header.
-- The header is shared by the search page and ranking distribution page, so theme switching remains available on both views.
+- The header is shared by the filter page and ranking distribution page, so theme switching remains available on both views.
 - Available themes: `ocean`, `ivory`, `forest`, `graphite`, `sunset`, `lavender`, `lagoon`, `rosewood`.
 - Each theme defines a `$primary` in `hsl(...)` format in `app.js` config.
 - On theme apply, `app.js` maps `$primary` to Bulma CSS variables (`--bulma-primary-*`, `--bulma-link-*`) and palette lightness steps.
@@ -43,12 +43,12 @@
 
 ## Language System (i18n)
 - Language is selected from a compact dropdown (`languageSelect`) in the header.
-- The header is shared by the search page and ranking distribution page, so language switching remains available on both views.
+- The header is shared by the filter page and ranking distribution page, so language switching remains available on both views.
 - Supported languages: `en`, `ja`, `ko`, `zh-CN`, `zh-TW`, `fr`, `de`, `es`, `it`, `pt`, `ru`, `ar`, `tr`, `th`, `vi`, `id`, `ms`, `pl`, `uk`.
 - On first load, language defaults to browser preference (`ja*` => Japanese, otherwise English), then persists in `localStorage` key `lm_language_v1`.
 - UI labels, placeholders, button text, status/error messages, tooltip text, and runtime notice are switched via dictionary values in `app.js` (`TRANSLATIONS`).
 - For non-bundled languages, app loads `./locales/<code>.json` on language switch and merges `translations` keys onto English fallback text.
-- Supported non-bundled locale files contain localized core UI labels (title, search/filter controls, primary actions, status labels) and ranking chart labels/actions/axis text so switching is visibly reflected across both main views before less-common fallback strings are needed.
+- Supported non-bundled locale files contain localized core UI labels (title, filter controls, primary actions, status labels) and ranking chart labels/actions/axis text so switching is visibly reflected across both main views before less-common fallback strings are needed.
 - If locale file loading fails (e.g. direct `file://` restrictions in some browsers), app keeps working with fallback strings and still allows language selection.
 - Result/status date-time text uses locale-aware formatting (`ja-JP` / `en-US`) based on current language.
 - Document direction is switched to RTL only for Arabic (`ar`), otherwise LTR.
@@ -85,7 +85,7 @@
   - power values found in local cache, including values above `3.0B`
 
 ## Filtering and Paging
-- Text search: fuzzy match (Fuzzysort), fallback to simple substring.
+- Text filter: fuzzy match (Fuzzysort), fallback to simple substring.
 - Status filter: `all` or `0..4`.
 - Kingdom filter input accepts:
   - Range: `1200-1250`
@@ -96,7 +96,7 @@
 
 ## UI States
 - Status message area for waiting/loading/error/cache usage.
-- Search/filter UI is separated into a left-side menu on desktop layouts.
+- Filter UI is separated into a left-side menu on desktop layouts.
 - Desktop layout uses a fluid-width shell so the left menu + main result area can expand across the viewport.
 - On mobile/tablet narrow layouts (Bulma desktop breakpoint under `1024px`), the left menu stacks above the result area and is toggled with a drawer summary.
 - Saved-list control rows collapse to single-column on medium/small widths to avoid button overlap.

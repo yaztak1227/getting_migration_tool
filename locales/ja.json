@@ -8,7 +8,7 @@
     "powerCandidate": "候補から選択",
     "powerCandidateAria": "検索パワー候補",
     "powerCandidatePlaceholder": "候補から選択",
-    "headerInfoText": "検索パワーごとの移民対象王国一覧を取得し、そのまま検索・絞り込み・ページ表示まで行えます。ローカルの Node.js プロキシ経由で API を取得します。",
+    "headerInfoText": "検索パワーごとの移民対象王国一覧を取得し、そのままフィルタリング・ページ表示まで行えます。ローカルの Node.js プロキシ経由で API を取得します。",
     "noPowerCache": "この検索パワーのキャッシュはありません。取得するボタンを押してください。",
     "invalidPowerInput": "検索パワーは {xxx.x}B または {xxxx}M 形式で入力してください（例: 3.5B）。",
     "ocrDetectedDescription": "{count}枚のOCR結果から 4〜5桁の数字を候補として抽出し、5桁は前後の候補関係を見ながら近い4桁側へ補正しました。内容を確認してから反映してください。",
@@ -51,9 +51,13 @@
     "rankChartTypeButtonLine": "折れ線グラフに切替",
     "rankChartTypeButtonBar": "棒グラフに切替",
     "rankChartExportImage": "グラフを1枚の画像に保存",
-    "rankChartBack": "検索へ戻る",
+    "rankChartBack": "フィルタ画面へ戻る",
     "rankChartDatasetLabel": "人数",
     "rankChartXAxis": "パワー帯",
-    "rankChartYAxis": "人数"
+    "rankChartYAxis": "人数",
+    "headerTitle": "Lordsmobile 移民王国フィルター",
+    "sideMenu": "フィルタメニュー",
+    "search": "テキストフィルタ",
+    "searchPlaceholder": "王国番号・状態・ランクで絞り込み"
   }
 }

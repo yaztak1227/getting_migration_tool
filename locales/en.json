@@ -8,7 +8,7 @@
     "powerCandidate": "Select from candidates",
     "powerCandidateAria": "Search power candidates",
     "powerCandidatePlaceholder": "Select from candidates",
-    "headerInfoText": "Fetch migration target kingdoms by search power, then search, filter, and paginate in one screen. API data is retrieved through the local Node.js proxy.",
+    "headerInfoText": "Fetch migration target kingdoms by search power, then filter and paginate in one screen. API data is retrieved through the local Node.js proxy.",
     "noPowerCache": "No cache exists for this search power. Click fetch.",
     "invalidPowerInput": "Enter search power as {xxx.x}B or {xxxx}M (example: 3.5B).",
     "ocrDetectedDescription": "Extracted 4-5 digit number candidates from {count} OCR result images, and corrected each 5-digit value to the closer 4-digit side using neighboring candidates. Verify before applying.",
@@ -51,9 +51,13 @@
     "rankChartTypeButtonLine": "Switch to Line Chart",
     "rankChartTypeButtonBar": "Switch to Bar Chart",
     "rankChartExportImage": "Save Charts as One Image",
-    "rankChartBack": "Back to Search",
+    "rankChartBack": "Back to Filters",
     "rankChartDatasetLabel": "Players",
     "rankChartXAxis": "Power band",
-    "rankChartYAxis": "Players"
+    "rankChartYAxis": "Players",
+    "headerTitle": "Lordsmobile Migration Kingdom Filter",
+    "sideMenu": "Filter Menu",
+    "search": "Text Filter",
+    "searchPlaceholder": "Filter by kingdom, status, or rank"
   }
 }
