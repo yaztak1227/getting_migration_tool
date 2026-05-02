@@ -48,7 +48,7 @@
 - On first load, language defaults to browser preference (`ja*` => Japanese, otherwise English), then persists in `localStorage` key `lm_language_v1`.
 - UI labels, placeholders, button text, status/error messages, tooltip text, and runtime notice are switched via dictionary values in `app.js` (`TRANSLATIONS`).
 - For non-bundled languages, app loads `./locales/<code>.json` on language switch and merges `translations` keys onto English fallback text.
-- Supported non-bundled locale files contain localized core UI labels (title, search/filter controls, primary actions, status labels) so switching is visibly reflected even before less-common fallback strings are needed.
+- Supported non-bundled locale files contain localized core UI labels (title, search/filter controls, primary actions, status labels) and ranking chart labels/actions/axis text so switching is visibly reflected across both main views before less-common fallback strings are needed.
 - If locale file loading fails (e.g. direct `file://` restrictions in some browsers), app keeps working with fallback strings and still allows language selection.
 - Result/status date-time text uses locale-aware formatting (`ja-JP` / `en-US`) based on current language.
 - Document direction is switched to RTL only for Arabic (`ar`), otherwise LTR.
