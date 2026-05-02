@@ -77,6 +77,63 @@ test.describe("ranking page", () => {
     await expect(page.locator("#rankChartStatus")).toContainText("1780, 1805");
   });
 
+  test("switches rendered ranking charts between bar and line types", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => {
+      const store = {
+        items: {
+          1000: buildCacheForBrowser(1000, [{ kingdomId: 1780, rank: 10, num: 90, status: 1 }]),
+          1100: buildCacheForBrowser(1100, [{ kingdomId: 1780, rank: 18, num: 90, status: 1 }]),
+        },
+      };
+      localStorage.setItem("lm_migration_cache_store_v1", JSON.stringify(store));
+
+      function buildCacheForBrowser(power, kingdomList) {
+        return {
+          requestedAt: new Date().toISOString(),
+          requestPlan: {
+            power,
+            num: 90,
+            status: 0,
+            order: 1,
+            url: "/api/migration",
+            method: "POST",
+          },
+          requestPayload: {
+            power,
+            num: 90,
+            status: 0,
+            order: 1,
+          },
+          kingdomList,
+        };
+      }
+    });
+
+    await page.goto("/ranking/1.0-1.1B/1780");
+    await expect(page.locator("#rankChartTypeButton")).toContainText("Line");
+
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const canvas = document.querySelector("#rankChartCanvasList canvas");
+          return window.Chart.getChart(canvas).config.type;
+        })
+      )
+      .toBe("bar");
+
+    await page.locator("#rankChartTypeButton").click();
+    await expect(page.locator("#rankChartTypeButton")).toContainText("Bar");
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const canvas = document.querySelector("#rankChartCanvasList canvas");
+          return window.Chart.getChart(canvas).config.type;
+        })
+      )
+      .toBe("line");
+  });
+
   test("restores power and kingdom chart inputs from query parameters", async ({ page }) => {
     await page.goto("/ranking?power=1.0-1.2B&kingdom=1780%2C1805");
 

@@ -415,13 +415,31 @@
       <div class="container is-fluid app-shell">
         <section class="card app-card">
           <header class="rank-chart-page-head">
-            <div>
+            <button
+              id="backToSearchButton"
+              class="button is-light rank-chart-icon-only-button"
+              type="button"
+              aria-label="検索へ戻る"
+              title="検索へ戻る"
+            >
+              <span class="rank-chart-button-icon" data-lucide="arrow-left"></span>
+            </button>
+            <div class="rank-chart-heading">
               <p id="rankChartTitle" class="title is-4 mb-1">ランキング分布図</p>
               <p id="rankChartPageNote" class="foot-note mb-0">キャッシュ済みデータから100M刻みの分布を表示します。</p>
             </div>
-            <button id="backToSearchButton" class="button is-light" type="button">検索へ戻る</button>
+            <div class="rank-chart-header-actions">
+              <button id="rankChartTypeButton" class="button is-link is-light" type="button">
+                <span class="rank-chart-button-icon" data-lucide="line-chart"></span>
+                <span class="rank-chart-button-label">折れ線グラフに切替</span>
+              </button>
+              <button id="exportRankChartsImageButton" class="button is-light" type="button">
+                <span class="rank-chart-button-icon" data-lucide="image-down"></span>
+                <span class="rank-chart-button-label">グラフを1枚の画像に保存</span>
+              </button>
+            </div>
           </header>
-          <div class="card-content p-5">
+          <div class="card-content rank-chart-card-content">
           <div class="rank-chart-grid">
             <div class="rank-chart-controls">
               <div class="field">
@@ -473,6 +491,7 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@6/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

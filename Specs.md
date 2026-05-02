@@ -29,6 +29,7 @@
 - Multiple Select `2.3.0`
 - html2canvas `1.4.1`
 - Chart.js `4.4.8`
+- Lucide `0.468.0`
 
 ## Theme System
 - Theme is selected from a compact dropdown (`themeSelect`) aligned at the right side of the header.
@@ -124,9 +125,13 @@
 - Result toolbar includes a `グラフに表示` button that navigates to the ranking distribution page.
 - The ranking distribution page is shown when the URL path is `/ranking` or `/ranking/<power-selection>/<kingdom-ids>`. It also accepts query parameters such as `/ranking?power=1.0-2.0B&kingdom=1234,1235`.
 - The ranking distribution page keeps the same shared header as the search page, including language and theme controls.
+- The ranking distribution page header places an icon-only back-to-search action at the left edge, while chart type toggle and combined chart image export actions are icon-labeled buttons aligned to the right and wrapping on narrow screens.
+- In ranking view, the shared page header section, ranking card header, and ranking card content use compact vertical padding so more chart area remains visible.
 - The ranking distribution page lists cached powers, accepts either multiple cached selections or a direct power/range input, and asks for 1-3 kingdom IDs.
 - Ranking distribution uses cached data only. Selected powers or direct ranges are expanded to 100M steps between the minimum and maximum power, and each 100M band is shown in the chart. If the target kingdom has non-zero ranks at both thresholds, the chart plots the absolute rank difference as the number of players in that power band; unchanged ranks are plotted as `0`. Missing cache or a threshold with rank `0` is plotted as `0` for that 100M band so the axis remains continuous.
-- The ranking distribution chart is a Chart.js bar chart. Up to 3 kingdom IDs are rendered as separate charts. Its selection state is reflected in the URL path as `/ranking/<power-selection>/<kingdom-ids>` so the same cached chart can be reopened repeatedly in local server mode. Query parameters are also parsed on direct open.
+- The ranking distribution chart is rendered by Chart.js and can be switched between bar and line chart types. Up to 3 kingdom IDs are rendered as separate charts. Its selection state is reflected in the URL path as `/ranking/<power-selection>/<kingdom-ids>` so the same cached chart can be reopened repeatedly in local server mode. Query parameters are also parsed on direct open.
+- Ranking chart panels use equal heights with an 18rem minimum and a viewport-aware height calculation that leaves room for the header and action row before fitting two charts comfortably on a desktop viewport.
+- The ranking distribution page includes a button to save all currently displayed charts as one PNG image via html2canvas.
 - Exported images use a decorated summary-card layout; when the current page has 20 or more rows, the exported image splits the table into left/right columns for easier scanning.
 - Exported image summary chips include the power used for the currently displayed fetched data.
 - Result table stays inside the result column with horizontal scrolling when the available width is narrower than the table minimum.

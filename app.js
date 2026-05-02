@@ -163,13 +163,21 @@
       rankChartKingdom: "王国番号（最大3つ）",
       rankChartKingdomPlaceholder: "例: 1234 1235 1236",
       rankChartRender: "グラフを作成",
+      rankChartTypeButtonLine: "折れ線グラフに切替",
+      rankChartTypeButtonBar: "棒グラフに切替",
+      rankChartExportImage: "グラフを1枚の画像に保存",
       rankChartBack: "検索へ戻る",
       rankChartNoCachedPowers: "キャッシュ済みデータがありません。先に取得してください。",
       rankChartInvalidSelection: "キャッシュ済みリストを複数選択するか、パワー範囲を入力してください。",
       rankChartInvalidKingdom: "王国番号を1〜3件で入力してください。",
       rankChartLibraryMissing: "Chart.js の読み込みに失敗しました。ネットワーク接続を確認して再読み込みしてください。",
+      rankChartExportLibraryMissing: "html2canvas の読み込みに失敗しました。ネットワーク接続を確認して再読み込みしてください。",
       rankChartNoData: "指定条件でプロットできるランキング分布がありません。",
       rankChartRendered: "{kingdom} のランキング分布を表示しました。",
+      rankChartExportNoCharts: "画像に保存するグラフがありません。",
+      rankChartExportPreparing: "グラフ画像を準備しています...",
+      rankChartExportDone: "グラフを1枚の画像として保存しました。",
+      rankChartExportFailed: "グラフ画像の保存に失敗しました: {message}",
       rankChartDatasetLabel: "人数",
       rankChartXAxis: "パワー帯",
       rankChartYAxis: "人数",
@@ -325,13 +333,21 @@
       rankChartKingdom: "Kingdom IDs (up to 3)",
       rankChartKingdomPlaceholder: "Example: 1234 1235 1236",
       rankChartRender: "Create Chart",
+      rankChartTypeButtonLine: "Switch to Line Chart",
+      rankChartTypeButtonBar: "Switch to Bar Chart",
+      rankChartExportImage: "Save Charts as One Image",
       rankChartBack: "Back to Search",
       rankChartNoCachedPowers: "No cached data exists. Fetch data first.",
       rankChartInvalidSelection: "Select multiple cached lists or enter a power range.",
       rankChartInvalidKingdom: "Enter 1 to 3 kingdom IDs.",
       rankChartLibraryMissing: "Chart.js failed to load. Check your network connection and reload.",
+      rankChartExportLibraryMissing: "html2canvas failed to load. Check your network connection and reload.",
       rankChartNoData: "No rank distribution can be plotted for the selected conditions.",
       rankChartRendered: "Displayed rank distribution for {kingdom}.",
+      rankChartExportNoCharts: "There are no charts to save as an image.",
+      rankChartExportPreparing: "Preparing chart image...",
+      rankChartExportDone: "Saved the charts as one image.",
+      rankChartExportFailed: "Failed to save chart image: {message}",
       rankChartDatasetLabel: "Players",
       rankChartXAxis: "Power band",
       rankChartYAxis: "Players",
@@ -577,7 +593,6 @@
       this.setText("#rankChartKingdomLabel", "rankChartKingdom");
       this.setAttr("#rankChartKingdomInput", "placeholder", "rankChartKingdomPlaceholder");
       this.setText("#renderRankChartButton", "rankChartRender");
-      this.setText("#backToSearchButton", "rankChartBack");
       this.setText("#emptyState .message-body", "emptyState");
       this.setText("#sortKingdomLabel", "sortKingdom");
       this.setText("#sortScrollLabel", "sortScroll");
@@ -753,6 +768,8 @@
       this.rankChartPowerRangeInput = document.getElementById("rankChartPowerRangeInput");
       this.rankChartKingdomInput = document.getElementById("rankChartKingdomInput");
       this.renderRankChartButton = document.getElementById("renderRankChartButton");
+      this.rankChartTypeButton = document.getElementById("rankChartTypeButton");
+      this.exportRankChartsImageButton = document.getElementById("exportRankChartsImageButton");
       this.rankChartStatus = document.getElementById("rankChartStatus");
       this.rankChartCanvasList = document.getElementById("rankChartCanvasList");
       this.pageIndicator = document.getElementById("pageIndicator");
@@ -1364,9 +1381,11 @@
         currentDataPower: null,
         ocrCandidateKingdoms: [],
         exportingImage: false,
+        exportingRankChartsImage: false,
         statusFilterUiReady: false,
         syncingStatusFilterUi: false,
         rankCharts: [],
+        rankChartType: "bar",
       };
     }
 
@@ -1380,6 +1399,7 @@
       this.bindEvents();
       this.setCacheInfo(this.t("cacheUnused"));
       this.renderRuntimeNotice();
+      this.updateRankChartActionButtonLabels();
       this.updateOcrControls();
       this.restoreFromCacheOnLoad();
       this.syncPageFromUrl();
@@ -1394,6 +1414,7 @@
       this.config.unknownStatusLabel = this.t("unknownStatus");
       this.config.listSortLocale = this.i18n.currentLanguage();
       this.i18n.applyStaticTexts();
+      this.updateRankChartActionButtonLabels();
       this.initPowerOptions();
       this.initFilterOptions();
       this.initStatusFilterUi();
@@ -1541,6 +1562,8 @@
       this.dom.openRankChartButton.addEventListener("click", () => this.navigateToRankChartPage());
       this.dom.backToSearchButton.addEventListener("click", () => this.navigateToSearchPage());
       this.dom.renderRankChartButton.addEventListener("click", () => this.handleRenderRankChart());
+      this.dom.rankChartTypeButton.addEventListener("click", () => this.handleToggleRankChartType());
+      this.dom.exportRankChartsImageButton.addEventListener("click", () => this.handleExportRankChartsImage());
       window.addEventListener("popstate", () => this.syncPageFromUrl());
       for (const button of this.dom.sortButtons) {
         button.addEventListener("click", () => this.handleSortChange(button.dataset.sortKey || ""));
@@ -1758,6 +1781,7 @@
 
     showRankChartPage() {
       this.renderRankChartPowerOptions();
+      document.body.classList.add("is-ranking-view");
       this.dom.mainSearchPage.hidden = false;
       this.dom.searchContent.hidden = true;
       this.dom.rankChartPage.hidden = false;
@@ -1769,6 +1793,7 @@
     }
 
     showSearchPage() {
+      document.body.classList.remove("is-ranking-view");
       this.dom.rankChartPage.hidden = true;
       this.dom.mainSearchPage.hidden = false;
       this.dom.searchContent.hidden = false;
@@ -1812,6 +1837,110 @@
       this.renderRankChart(result);
       this.updateRankChartUrl(result.powerSpec, result.kingdomIds);
       this.setRankChartStatus(this.t("rankChartRendered", { kingdom: result.kingdomIds.join(", ") }));
+    }
+
+    handleToggleRankChartType() {
+      this.state.rankChartType = this.state.rankChartType === "bar" ? "line" : "bar";
+      this.updateRankChartTypeButtonText();
+      if (this.state.rankCharts.length > 0) {
+        this.handleRenderRankChart();
+      }
+    }
+
+    updateRankChartTypeButtonText() {
+      if (!this.dom || !this.dom.rankChartTypeButton) return;
+      const key = this.state && this.state.rankChartType === "bar"
+        ? "rankChartTypeButtonLine"
+        : "rankChartTypeButtonBar";
+      this.setIconButtonContent(this.dom.rankChartTypeButton, {
+        icon: this.state.rankChartType === "bar" ? "line-chart" : "bar-chart-3",
+        label: this.t(key),
+      });
+      this.renderLucideIcons();
+    }
+
+    updateRankChartActionButtonLabels() {
+      this.updateRankChartTypeButtonText();
+      this.setIconButtonContent(this.dom.exportRankChartsImageButton, {
+        icon: "image-down",
+        label: this.t("rankChartExportImage"),
+      });
+      this.setIconButtonContent(this.dom.backToSearchButton, {
+        icon: "arrow-left",
+        label: this.t("rankChartBack"),
+        iconOnly: true,
+      });
+      this.renderLucideIcons();
+    }
+
+    setIconButtonContent(button, { icon, label, iconOnly = false }) {
+      if (!button) return;
+      button.innerHTML = "";
+      const iconSpan = document.createElement("span");
+      iconSpan.className = "rank-chart-button-icon";
+      iconSpan.setAttribute("data-lucide", icon);
+      button.appendChild(iconSpan);
+
+      button.setAttribute("aria-label", label);
+      button.setAttribute("title", label);
+      if (iconOnly) return;
+
+      const labelSpan = document.createElement("span");
+      labelSpan.className = "rank-chart-button-label";
+      labelSpan.textContent = label;
+      button.appendChild(labelSpan);
+    }
+
+    renderLucideIcons() {
+      if (!window.lucide || typeof window.lucide.createIcons !== "function") return;
+      window.lucide.createIcons({
+        attrs: {
+          "aria-hidden": "true",
+          focusable: "false",
+        },
+      });
+    }
+
+    async handleExportRankChartsImage() {
+      if (this.state.exportingRankChartsImage) return;
+      if (this.state.rankCharts.length === 0 || this.dom.rankChartCanvasList.children.length === 0) {
+        this.setRankChartStatus(this.t("rankChartExportNoCharts"), true);
+        return;
+      }
+      if (typeof window.html2canvas !== "function") {
+        this.setRankChartStatus(this.t("rankChartExportLibraryMissing"), true);
+        return;
+      }
+
+      this.state.exportingRankChartsImage = true;
+      this.updateRankChartActionButtonsDisabledState();
+      this.setRankChartStatus(this.t("rankChartExportPreparing"));
+
+      try {
+        const canvas = await window.html2canvas(this.dom.rankChartCanvasList, {
+          backgroundColor: "#ffffff",
+          useCORS: true,
+          logging: false,
+          scale: Math.max(1.5, window.devicePixelRatio || 1),
+        });
+        const blob = await this.canvasToBlob(canvas);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = this.buildRankChartExportFileName();
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        this.setRankChartStatus(this.t("rankChartExportDone"));
+      } catch (error) {
+        console.error(error);
+        const message = String(error && error.message ? error.message : this.t("unknownError"));
+        this.setRankChartStatus(this.t("rankChartExportFailed", { message }), true);
+      } finally {
+        this.state.exportingRankChartsImage = false;
+        this.updateRankChartActionButtonsDisabledState();
+      }
     }
 
     buildRankChartDataFromInputs() {
@@ -1919,7 +2048,7 @@
         wrap.appendChild(canvas);
         this.dom.rankChartCanvasList.appendChild(wrap);
         const chart = new window.Chart(canvas, {
-          type: "bar",
+          type: this.state.rankChartType,
           data: {
             labels: result.labels,
             datasets: [
@@ -1929,6 +2058,8 @@
                 backgroundColor: this.rankChartColor(index, 0.72),
                 borderColor: this.rankChartColor(index, 1),
                 borderWidth: 1,
+                fill: this.state.rankChartType === "line" ? false : undefined,
+                tension: this.state.rankChartType === "line" ? 0.28 : undefined,
               },
             ],
           },
@@ -2002,6 +2133,21 @@
     setRankChartStatus(text, isError = false) {
       this.dom.rankChartStatus.textContent = text;
       this.dom.rankChartStatus.classList.toggle("has-text-danger", isError);
+    }
+
+    updateRankChartActionButtonsDisabledState(forceDisabled = false) {
+      this.dom.rankChartTypeButton.disabled = forceDisabled || this.state.exportingRankChartsImage;
+      this.dom.exportRankChartsImageButton.disabled = forceDisabled || this.state.exportingRankChartsImage;
+    }
+
+    buildRankChartExportFileName() {
+      const now = new Date();
+      const yyyy = String(now.getFullYear()).padStart(4, "0");
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mi = String(now.getMinutes()).padStart(2, "0");
+      return `ranking-charts-${this.state.rankChartType}-${yyyy}${mm}${dd}-${hh}${mi}.png`;
     }
 
     updateRankChartUrl(powerSpec, kingdomIds) {
@@ -2990,6 +3136,7 @@
       this.dom.rankChartPowerRangeInput.disabled = isBusy;
       this.dom.rankChartKingdomInput.disabled = isBusy;
       this.dom.renderRankChartButton.disabled = isBusy;
+      this.updateRankChartActionButtonsDisabledState(isBusy);
       this.updateExportButtonDisabledState(isBusy);
 
       if (isBusy) {

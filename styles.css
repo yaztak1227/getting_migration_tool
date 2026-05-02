@@ -414,6 +414,20 @@ body {
   box-shadow: 0 22px 50px rgba(21, 39, 59, 0.08);
 }
 
+.is-ranking-view #mainSearchPage.section {
+  padding-top: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.is-ranking-view #rankChartPage.section {
+  padding-top: 0.5rem;
+  padding-bottom: 0.75rem;
+}
+
+.is-ranking-view .app-header {
+  margin-bottom: 0.5rem !important;
+}
+
 .control-panel {
   background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 88%, white), var(--surface));
   border: 1px solid var(--border);
@@ -1017,17 +1031,56 @@ body {
 }
 
 .rank-chart-page-head {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.5rem 1.5rem 0;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0;
+}
+
+.rank-chart-heading {
+  min-width: 0;
+}
+
+.rank-chart-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.rank-chart-header-actions .button {
+  gap: 0.45rem;
+}
+
+.rank-chart-button-icon {
+  display: inline-flex;
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+}
+
+.rank-chart-button-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.rank-chart-icon-only-button {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.rank-chart-card-content {
+  padding: 1rem !important;
 }
 
 .rank-chart-grid {
   display: grid;
   grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
-  gap: 1.25rem;
+  gap: 1rem;
   align-items: stretch;
 }
 
@@ -1039,12 +1092,14 @@ body {
   display: grid;
   gap: 1rem;
   min-width: 0;
+  grid-auto-rows: minmax(18rem, clamp(18rem, calc((100vh - 15rem) / 2), 24rem));
 }
 
 .rank-chart-canvas-wrap {
   min-width: 0;
-  min-height: 420px;
-  padding: 1rem;
+  height: 100%;
+  min-height: 18rem;
+  padding: 0.75rem;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface-2);
@@ -1287,7 +1342,18 @@ fieldset[disabled] .button {
   }
 
   .rank-chart-page-head {
-    flex-direction: column;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: flex-start;
+  }
+
+  .rank-chart-header-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .rank-chart-header-actions .button {
+    flex: 1 1 12rem;
   }
 
   .rank-chart-grid {
@@ -1295,7 +1361,7 @@ fieldset[disabled] .button {
   }
 
   .rank-chart-canvas-wrap {
-    min-height: 320px;
+    min-height: 18rem;
   }
 
   .ocr-example-popover {
