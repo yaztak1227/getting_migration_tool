@@ -134,6 +134,59 @@ test.describe("ranking page", () => {
       .toBe("line");
   });
 
+  test("uses the same Y-axis maximum across three ranking charts", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => {
+      const store = {
+        items: {
+          1000: buildCacheForBrowser(1000, [
+            { kingdomId: 1780, rank: 10, num: 90, status: 1 },
+            { kingdomId: 1805, rank: 40, num: 90, status: 1 },
+            { kingdomId: 1910, rank: 70, num: 90, status: 1 },
+          ]),
+          1100: buildCacheForBrowser(1100, [
+            { kingdomId: 1780, rank: 14, num: 90, status: 1 },
+            { kingdomId: 1805, rank: 65, num: 90, status: 1 },
+            { kingdomId: 1910, rank: 125, num: 90, status: 1 },
+          ]),
+        },
+      };
+      localStorage.setItem("lm_migration_cache_store_v1", JSON.stringify(store));
+
+      function buildCacheForBrowser(power, kingdomList) {
+        return {
+          requestedAt: new Date().toISOString(),
+          requestPlan: {
+            power,
+            num: 90,
+            status: 0,
+            order: 1,
+            url: "/api/migration",
+            method: "POST",
+          },
+          requestPayload: {
+            power,
+            num: 90,
+            status: 0,
+            order: 1,
+          },
+          kingdomList,
+        };
+      }
+    });
+
+    await page.goto("/ranking/1.0-1.1B/1780,1805,1910");
+    await expect(page.locator(".rank-chart-canvas-wrap")).toHaveCount(3);
+
+    const yAxisMaxes = await page.evaluate(() =>
+      [...document.querySelectorAll("#rankChartCanvasList canvas")].map((canvas) =>
+        window.Chart.getChart(canvas).options.scales.y.max
+      )
+    );
+
+    expect(yAxisMaxes).toEqual([56, 56, 56]);
+  });
+
   test("restores power and kingdom chart inputs from query parameters", async ({ page }) => {
     await page.goto("/ranking?power=1.0-1.2B&kingdom=1780%2C1805");
 

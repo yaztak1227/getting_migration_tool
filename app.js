@@ -2035,6 +2035,7 @@
 
     renderRankChart(result) {
       const palette = this.getExportPalette();
+      const yAxisMax = this.calculateRankChartYAxisMax(result.charts);
       for (const chart of this.state.rankCharts) {
         chart.destroy();
       }
@@ -2096,6 +2097,8 @@
               },
               y: {
                 beginAtZero: true,
+                suggestedMax: yAxisMax,
+                max: yAxisMax,
                 ticks: {
                   precision: 0,
                   color: palette.text,
@@ -2114,6 +2117,15 @@
         });
         this.state.rankCharts.push(chart);
       });
+    }
+
+    calculateRankChartYAxisMax(charts) {
+      const maxValue = Math.max(
+        0,
+        ...charts.flatMap((chart) => chart.counts).filter((value) => Number.isFinite(value))
+      );
+      if (maxValue <= 0) return undefined;
+      return maxValue + 1;
     }
 
     rankChartColor(index, alpha) {
