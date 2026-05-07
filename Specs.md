@@ -70,6 +70,7 @@
   - On power input change: if matching cache exists, renders immediately.
   - On fetch: uses cache unless force refresh; force refresh pulls API.
   - When the power input is a range such as `1.0-2.0B`, fetch runs in 100M steps and stores each power result in the same cache store.
+  - If `localStorage` cache writing exceeds the browser quota, the app prunes older cached powers and retries. If the newest result still cannot be stored, the fetch result is still rendered and only cache persistence is skipped.
 
 ## Power Input
 - Search power is entered in a free text input (`powerSelect`).

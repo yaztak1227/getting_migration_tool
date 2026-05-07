@@ -973,8 +973,48 @@
       }
     }
 
-    writeStore(store) {
-      window.localStorage.setItem(this.config.cacheStorageKey, JSON.stringify(store));
+    writeStore(store, protectedKey = "") {
+      try {
+        window.localStorage.setItem(this.config.cacheStorageKey, JSON.stringify(store));
+        return true;
+      } catch (error) {
+        if (!this.isQuotaExceededError(error)) throw error;
+      }
+
+      const items = store && store.items && typeof store.items === "object" ? store.items : {};
+      const keyToKeep = String(protectedKey || "");
+      const removableKeys = Object.keys(items)
+        .filter((key) => key !== keyToKeep)
+        .sort((a, b) => this.cacheTimestamp(items[a]) - this.cacheTimestamp(items[b]));
+
+      for (const key of removableKeys) {
+        delete items[key];
+        try {
+          window.localStorage.setItem(this.config.cacheStorageKey, JSON.stringify({ ...store, items }));
+          console.warn("localStorage cache pruned because quota was exceeded");
+          return true;
+        } catch (error) {
+          if (!this.isQuotaExceededError(error)) throw error;
+        }
+      }
+
+      console.warn("localStorage cache write skipped because quota was exceeded");
+      return false;
+    }
+
+    cacheTimestamp(value) {
+      const timestamp = Date.parse(value && value.requestedAt ? value.requestedAt : "");
+      return Number.isFinite(timestamp) ? timestamp : 0;
+    }
+
+    isQuotaExceededError(error) {
+      return Boolean(
+        error &&
+          (error.name === "QuotaExceededError" ||
+            error.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+            error.code === 22 ||
+            error.code === 1014)
+      );
     }
 
     readByPower(power) {
@@ -994,13 +1034,17 @@
       if (key) {
         const store = this.readStore();
         store.items[key] = value;
-        this.writeStore(store);
+        this.writeStore(store, key);
       }
 
       // 旧形式との互換のために最新結果をCookieにも保存する（サイズ超過時はlocalStorageのみ有効）。
-      const serialized = encodeURIComponent(JSON.stringify(value));
-      document.cookie =
-        `${this.config.cookieName}=${serialized}; max-age=${this.config.cookieMaxAgeSec}; path=/; SameSite=Lax`;
+      try {
+        const serialized = encodeURIComponent(JSON.stringify(value));
+        document.cookie =
+          `${this.config.cookieName}=${serialized}; max-age=${this.config.cookieMaxAgeSec}; path=/; SameSite=Lax`;
+      } catch (error) {
+        console.warn("legacy cookie cache write skipped", error);
+      }
     }
 
     isAvailable(cache, requestPlan) {
