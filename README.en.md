@@ -43,7 +43,7 @@ However, when the app runs via `file://`, browser restrictions may prevent stabl
 
 ### 2. If you want reliable API fetch and OCR
 
-With Node.js installed, run this in the project root:
+With Node.js 24 or later installed, run this in the project root:
 
 ```bash
 npm run start
@@ -61,6 +61,10 @@ Available scripts:
 - `npm run serve`
 - `npm run start:6080`
 - `npm run start:6000`
+
+`package.json` declares `engines.node: >=24`, so any deployment environment that runs `server.js` should use the same Node.js version floor.
+
+This repository also includes `.nvmrc` and `.node-version`. If you use `nvm` or a compatible version manager, entering this folder and running `nvm use` makes it easier to align the local working environment to Node.js 24.
 
 ## How to Read the Screen
 

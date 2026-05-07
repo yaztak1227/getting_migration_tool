@@ -43,7 +43,7 @@ Lords Mobile の移民対象王国を検索・絞り込みするための、ブ�
 
 ### 2. API 取得や OCR も安定して使いたい場合
 
-Node.js が入っている環境で、プロジェクト直下で次を実行します。
+Node.js 24 以上が入っている環境で、プロジェクト直下で次を実行します。
 
 ```bash
 npm run start
@@ -61,6 +61,10 @@ http://127.0.0.1:6080
 - `npm run serve`
 - `npm run start:6080`
 - `npm run start:6000`
+
+`package.json` では `engines.node: >=24` を指定しています。デプロイ環境でも同じ Node.js バージョン条件を設定してください。
+
+このリポジトリには `.nvmrc` と `.node-version` も含めています。`nvm` や対応するバージョンマネージャを使う場合は、このフォルダに入って `nvm use` するとローカル作業環境を Node.js 24 系に合わせやすくなります。
 
 ## 画面の見方
 

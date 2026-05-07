@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Getting Migration Tool for AWS Lambda Function URL.
+
+Resources:
+  GettingMigrationToolFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: getting-migration-tool
+      CodeUri: build/package
+      Handler: lambda-handler.handler
+      Runtime: nodejs24.x
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Timeout: 30
+      FunctionUrlConfig:
+        AuthType: NONE
+        InvokeMode: BUFFERED
+      Environment:
+        Variables:
+          REMOTE_API_URL: https://lordsmobile.igg.com/project/game_tool/ajax.php?action=get_migration_scroll&lang=ja
+
+Outputs:
+  GettingMigrationToolUrl:
+    Description: Lambda Function URL
+    Value: !GetAtt GettingMigrationToolFunctionUrl.FunctionUrl

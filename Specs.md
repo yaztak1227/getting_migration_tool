@@ -6,7 +6,7 @@
 
 ## Runtime Modes
 - Direct open (`file://`): UI can load, but API access may be restricted by browser security.
-- Recommended API mode: run local proxy (`server.js`) and open `http://127.0.0.1:6080`.
+- Recommended API mode: run local proxy (`server.js`) with Node.js 24 or later and open `http://127.0.0.1:6080`.
 - AWS Lambda mode: package the site files plus Lambda handler from `lambda-work/` and expose the Function URL as the single entrypoint.
 
 ## File Structure
@@ -15,6 +15,7 @@
 - `app.js`: Client logic (theme, cache, fetch, filtering, paging, rendering, browser OCR helper).
 - `locales/*.json`: Language resource placeholders (19 files: en, ja, ko, zh-CN, zh-TW, fr, de, es, it, pt, ru, ar, tr, th, vi, id, ms, pl, uk).
 - `server.js`: Local proxy to migration API endpoint.
+- `.nvmrc` / `.node-version`: Project-local Node.js version hint files pinned to major version 24.
 - `lambda-work/`: AWS Lambda deployment work area (`lambda-handler.js`, `template.yaml`, packaging script, local build output).
 - `assets/examples/ocr-reference-kingdoms.png`: OCR参考画像のホバープレビュー用ファイル。
 - `lordsmobile-api-spec.md`: External API behavior memo.
@@ -156,6 +157,7 @@
 - No build step required for frontend operation.
 - Local JS/CSS files must be referenced by relative paths from `index.html`.
 - External libraries should be loaded via CDN.
+- When using the local proxy or a Node-based deployment/runtime for `server.js`, Node.js 24 or later is required.
 - Lambda deployment assets are maintained separately under `lambda-work/` so the direct-open frontend flow remains unchanged.
 
 ## Verification
