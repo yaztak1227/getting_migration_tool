@@ -168,6 +168,7 @@
       rankChartTypeButtonBar: "棒グラフに切替",
       rankChartExportImage: "グラフを1枚の画像に保存",
       rankChartBack: "フィルタ画面へ戻る",
+      scrollTop: "先頭へ戻る",
       rankChartNoCachedPowers: "キャッシュ済みデータがありません。先に取得してください。",
       rankChartInvalidSelection: "キャッシュ済みリストを複数選択するか、パワー範囲を入力してください。",
       rankChartInvalidKingdom: "王国番号を1〜3件で入力してください。",
@@ -343,6 +344,7 @@
       rankChartTypeButtonBar: "Switch to Bar Chart",
       rankChartExportImage: "Save Charts as One Image",
       rankChartBack: "Back to Filters",
+      scrollTop: "Back to Top",
       rankChartNoCachedPowers: "No cached data exists. Fetch data first.",
       rankChartInvalidSelection: "Select multiple cached lists or enter a power range.",
       rankChartInvalidKingdom: "Enter 1 to 3 kingdom IDs.",
@@ -597,6 +599,8 @@
       this.setText("#openRankChartButton", "rankChartButton");
       this.setText("#rankChartTitle", "rankChartTitle");
       this.setText("#rankChartPageNote", "rankChartPageNote");
+      this.setAttr("#scrollTopButton", "aria-label", "scrollTop");
+      this.setAttr("#scrollTopButton", "title", "scrollTop");
       this.setText("#rankChartCachedPowersLabel", "rankChartCachedPowers");
       this.setText("#refreshRankChartCacheButton", "rankChartRefreshSelectedCache");
       this.setText("#rankChartPowerRangeLabel", "rankChartPowerRange");
@@ -784,6 +788,7 @@
       this.exportRankChartsImageButton = document.getElementById("exportRankChartsImageButton");
       this.rankChartStatus = document.getElementById("rankChartStatus");
       this.rankChartCanvasList = document.getElementById("rankChartCanvasList");
+      this.scrollTopButton = document.getElementById("scrollTopButton");
       this.pageIndicator = document.getElementById("pageIndicator");
       this.emptyState = document.getElementById("emptyState");
       this.resultTable = document.getElementById("resultTable");
@@ -1457,6 +1462,7 @@
       this.renderRuntimeNotice();
       this.updateRankChartActionButtonLabels();
       this.updateOcrControls();
+      this.updateScrollTopButtonVisibility();
       this.restoreFromCacheOnLoad();
       this.syncPageFromUrl();
     }
@@ -1621,6 +1627,8 @@
       this.dom.refreshRankChartCacheButton.addEventListener("click", () => this.handleRefreshRankChartSelectedCache());
       this.dom.rankChartTypeButton.addEventListener("click", () => this.handleToggleRankChartType());
       this.dom.exportRankChartsImageButton.addEventListener("click", () => this.handleExportRankChartsImage());
+      this.dom.scrollTopButton.addEventListener("click", () => this.handleScrollTop());
+      window.addEventListener("scroll", () => this.updateScrollTopButtonVisibility(), { passive: true });
       window.addEventListener("popstate", () => this.syncPageFromUrl());
       for (const button of this.dom.sortButtons) {
         button.addEventListener("click", () => this.handleSortChange(button.dataset.sortKey || ""));
@@ -1847,6 +1855,7 @@
       } else if (!this.dom.rankChartStatus.textContent) {
         this.setRankChartStatus("");
       }
+      this.updateScrollTopButtonVisibility();
     }
 
     showSearchPage() {
@@ -1854,6 +1863,19 @@
       this.dom.rankChartPage.hidden = true;
       this.dom.mainSearchPage.hidden = false;
       this.dom.searchContent.hidden = false;
+      this.updateScrollTopButtonVisibility();
+    }
+
+    handleScrollTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+
+    updateScrollTopButtonVisibility() {
+      const shouldShow = window.scrollY > 220;
+      this.dom.scrollTopButton.hidden = !shouldShow;
     }
 
     syncPageFromUrl() {

@@ -137,6 +137,7 @@
 - When multiple ranking charts are displayed, their Y-axis maximum is shared across all charts as the largest plotted count plus 1 so kingdom distributions can be compared on the same scale.
 - Ranking chart panels use equal heights with an 18rem minimum and a viewport-aware height calculation that leaves room for the header and action row before fitting two charts comfortably on a desktop viewport.
 - The ranking distribution page includes a button to save all currently displayed charts as one PNG image via html2canvas.
+- Both the search page and ranking distribution page include a shared floating `先頭へ戻る` button (up-arrow icon) that appears after scrolling down and smoothly returns to the top when clicked.
 - Exported images use a decorated summary-card layout; when the current page has 20 or more rows, the exported image splits the table into left/right columns for easier scanning.
 - Exported image summary chips include the power used for the currently displayed fetched data.
 - Result table stays inside the result column with horizontal scrolling when the available width is narrower than the table minimum.
