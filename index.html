@@ -443,9 +443,14 @@
           <div class="rank-chart-grid">
             <div class="rank-chart-controls">
               <div class="field">
-                <label id="rankChartCachedPowersLabel" class="label" for="rankChartPowerList">
-                  キャッシュ済みリスト
-                </label>
+                <div class="rank-chart-label-row">
+                  <label id="rankChartCachedPowersLabel" class="label" for="rankChartPowerList">
+                    キャッシュ済みリスト
+                  </label>
+                  <button id="refreshRankChartCacheButton" class="button is-light is-small" type="button">
+                    選択を再取得
+                  </button>
+                </div>
                 <div class="select is-multiple is-fullwidth">
                   <select id="rankChartPowerList" multiple size="8"></select>
                 </div>

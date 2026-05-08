@@ -1042,12 +1042,31 @@ body {
   min-width: 0;
 }
 
+.rank-chart-heading .title,
+.rank-chart-heading .foot-note,
+.rank-chart-controls .label,
+#rankChartStatus {
+  color: var(--strong);
+}
+
 .rank-chart-header-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.5rem;
   min-width: 0;
+}
+
+.rank-chart-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.45rem;
+}
+
+.rank-chart-label-row .label {
+  margin-bottom: 0;
 }
 
 .rank-chart-header-actions .button {

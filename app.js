@@ -158,6 +158,7 @@
       rankChartPageNote: "キャッシュ済みデータから100M刻みの分布を表示します。",
       rankChartCloseAria: "閉じる",
       rankChartCachedPowers: "キャッシュ済みリスト",
+      rankChartRefreshSelectedCache: "選択を再取得",
       rankChartPowerRange: "パワー範囲",
       rankChartPowerRangePlaceholder: "例: 1.0-2.0B または 1000M 1100M",
       rankChartKingdom: "王国番号（最大3つ）",
@@ -178,6 +179,10 @@
       rankChartExportPreparing: "グラフ画像を準備しています...",
       rankChartExportDone: "グラフを1枚の画像として保存しました。",
       rankChartExportFailed: "グラフ画像の保存に失敗しました: {message}",
+      rankChartRefreshSelectRequired: "再取得するキャッシュ済みリストを1件以上選択してください。",
+      rankChartRefreshLoading: "選択したキャッシュ済みリストを再取得しています... ({index}/{count})",
+      rankChartRefreshDone: "{count}件のキャッシュ済みリストを再取得しました。",
+      rankChartRefreshFailed: "キャッシュ済みリストの再取得に失敗しました: {message}",
       rankChartDatasetLabel: "人数",
       rankChartXAxis: "パワー帯",
       rankChartYAxis: "人数",
@@ -328,6 +333,7 @@
       rankChartPageNote: "Show 100M-step distributions from cached data.",
       rankChartCloseAria: "Close",
       rankChartCachedPowers: "Cached Lists",
+      rankChartRefreshSelectedCache: "Refresh Selected",
       rankChartPowerRange: "Power Range",
       rankChartPowerRangePlaceholder: "Example: 1.0-2.0B or 1000M 1100M",
       rankChartKingdom: "Kingdom IDs (up to 3)",
@@ -348,6 +354,10 @@
       rankChartExportPreparing: "Preparing chart image...",
       rankChartExportDone: "Saved the charts as one image.",
       rankChartExportFailed: "Failed to save chart image: {message}",
+      rankChartRefreshSelectRequired: "Select at least one cached list to refresh.",
+      rankChartRefreshLoading: "Refreshing selected cached lists... ({index}/{count})",
+      rankChartRefreshDone: "Refreshed {count} cached lists.",
+      rankChartRefreshFailed: "Failed to refresh cached lists: {message}",
       rankChartDatasetLabel: "Players",
       rankChartXAxis: "Power band",
       rankChartYAxis: "Players",
@@ -588,6 +598,7 @@
       this.setText("#rankChartTitle", "rankChartTitle");
       this.setText("#rankChartPageNote", "rankChartPageNote");
       this.setText("#rankChartCachedPowersLabel", "rankChartCachedPowers");
+      this.setText("#refreshRankChartCacheButton", "rankChartRefreshSelectedCache");
       this.setText("#rankChartPowerRangeLabel", "rankChartPowerRange");
       this.setAttr("#rankChartPowerRangeInput", "placeholder", "rankChartPowerRangePlaceholder");
       this.setText("#rankChartKingdomLabel", "rankChartKingdom");
@@ -765,6 +776,7 @@
       this.openRankChartButton = document.getElementById("openRankChartButton");
       this.backToSearchButton = document.getElementById("backToSearchButton");
       this.rankChartPowerList = document.getElementById("rankChartPowerList");
+      this.refreshRankChartCacheButton = document.getElementById("refreshRankChartCacheButton");
       this.rankChartPowerRangeInput = document.getElementById("rankChartPowerRangeInput");
       this.rankChartKingdomInput = document.getElementById("rankChartKingdomInput");
       this.renderRankChartButton = document.getElementById("renderRankChartButton");
@@ -1606,6 +1618,7 @@
       this.dom.openRankChartButton.addEventListener("click", () => this.navigateToRankChartPage());
       this.dom.backToSearchButton.addEventListener("click", () => this.navigateToSearchPage());
       this.dom.renderRankChartButton.addEventListener("click", () => this.handleRenderRankChart());
+      this.dom.refreshRankChartCacheButton.addEventListener("click", () => this.handleRefreshRankChartSelectedCache());
       this.dom.rankChartTypeButton.addEventListener("click", () => this.handleToggleRankChartType());
       this.dom.exportRankChartsImageButton.addEventListener("click", () => this.handleExportRankChartsImage());
       window.addEventListener("popstate", () => this.syncPageFromUrl());
@@ -1883,6 +1896,51 @@
       this.setRankChartStatus(this.t("rankChartRendered", { kingdom: result.kingdomIds.join(", ") }));
     }
 
+    async handleRefreshRankChartSelectedCache() {
+      const selectedPowers = [...this.dom.rankChartPowerList.selectedOptions]
+        .map((option) => Number(option.value))
+        .filter((value) => Number.isFinite(value) && value > 0)
+        .sort((a, b) => a - b);
+      if (selectedPowers.length === 0) {
+        this.setRankChartStatus(this.t("rankChartRefreshSelectRequired"), true);
+        return;
+      }
+
+      this.setBusy(true);
+      try {
+        for (let index = 0; index < selectedPowers.length; index += 1) {
+          const power = selectedPowers[index];
+          this.setRankChartStatus(this.t("rankChartRefreshLoading", {
+            index: index + 1,
+            count: selectedPowers.length,
+          }));
+          const requestPlan = this.api.buildRequestPlan(power);
+          const list = await this.api.fetchKingdomList(power);
+          const nowIso = new Date().toISOString();
+          this.cacheStore.write({
+            requestedAt: nowIso,
+            requestPlan,
+            requestPayload: {
+              power,
+              num: this.config.api.defaults.num,
+              status: this.config.api.defaults.status,
+              order: this.config.api.defaults.order,
+            },
+            kingdomList: this.filter.normalizeList(list),
+          });
+        }
+        this.refreshPowerOptions();
+        this.renderRankChartPowerOptions(selectedPowers);
+        this.setRankChartStatus(this.t("rankChartRefreshDone", { count: selectedPowers.length }));
+      } catch (error) {
+        console.error(error);
+        const message = String(error && error.message ? error.message : this.t("unknownError"));
+        this.setRankChartStatus(this.t("rankChartRefreshFailed", { message }), true);
+      } finally {
+        this.setBusy(false);
+      }
+    }
+
     handleToggleRankChartType() {
       this.state.rankChartType = this.state.rankChartType === "bar" ? "line" : "bar";
       this.updateRankChartTypeButtonText();
@@ -2130,10 +2188,10 @@
                 title: {
                   display: true,
                   text: this.t("rankChartXAxis"),
-                  color: palette.muted,
+                  color: palette.strong,
                 },
                 ticks: {
-                  color: palette.text,
+                  color: palette.strong,
                 },
                 grid: {
                   color: palette.border,
@@ -2150,7 +2208,7 @@
                 title: {
                   display: true,
                   text: this.t("rankChartYAxis"),
-                  color: palette.muted,
+                  color: palette.strong,
                 },
                 grid: {
                   color: palette.border,
@@ -3189,6 +3247,7 @@
       this.dom.resetFiltersButton.disabled = isBusy;
       this.dom.openRankChartButton.disabled = isBusy;
       this.dom.rankChartPowerList.disabled = isBusy;
+      this.dom.refreshRankChartCacheButton.disabled = isBusy;
       this.dom.rankChartPowerRangeInput.disabled = isBusy;
       this.dom.rankChartKingdomInput.disabled = isBusy;
       this.dom.renderRankChartButton.disabled = isBusy;
