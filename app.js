@@ -1453,6 +1453,7 @@
         syncingStatusFilterUi: false,
         rankCharts: [],
         rankChartType: "bar",
+        rankChartLastResult: null,
       };
     }
 
@@ -2046,20 +2047,18 @@
       this.updateRankChartActionButtonsDisabledState();
       this.setRankChartStatus(this.t("rankChartExportPreparing"));
 
-      const list = this.dom.rankChartCanvasList;
-      const wraps = [...list.querySelectorAll(".rank-chart-canvas-wrap")];
-      const previousListStyle = {
-        width: list.style.width,
-      };
-      const previousWrapStyles = wraps.map((wrap) => ({
-        minHeight: wrap.style.minHeight,
-      }));
+      const snapshot = this.state.rankChartLastResult;
+      if (!snapshot || !snapshot.labels || !snapshot.charts || snapshot.charts.length === 0) {
+        this.setRankChartStatus(this.t("rankChartExportNoCharts"), true);
+        this.state.exportingRankChartsImage = false;
+        this.updateRankChartActionButtonsDisabledState();
+        return;
+      }
+
+      const { container, tempCharts } = this.createVirtualRankChartExportContainer(snapshot);
+      document.body.appendChild(container);
       try {
-        list.style.width = `${this.config.imageExport.rankChartsWidth}px`;
-        for (const wrap of wraps) {
-          wrap.style.minHeight = "18rem";
-        }
-        const canvas = await this.renderElementToCanvas(list);
+        const canvas = await this.renderElementToCanvas(container);
         const blob = await this.canvasToBlob(canvas);
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -2075,13 +2074,62 @@
         const message = String(error && error.message ? error.message : this.t("unknownError"));
         this.setRankChartStatus(this.t("rankChartExportFailed", { message }), true);
       } finally {
-        list.style.width = previousListStyle.width;
-        wraps.forEach((wrap, index) => {
-          wrap.style.minHeight = previousWrapStyles[index].minHeight;
-        });
+        for (const chart of tempCharts) {
+          chart.destroy();
+        }
+        container.remove();
         this.state.exportingRankChartsImage = false;
         this.updateRankChartActionButtonsDisabledState();
       }
+    }
+
+    createVirtualRankChartExportContainer(snapshot) {
+      const palette = this.getExportPalette();
+      const yAxisMax = this.calculateRankChartYAxisMax(snapshot.charts);
+      const container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-100000px";
+      container.style.top = "0";
+      container.style.width = `${this.config.imageExport.rankChartsWidth}px`;
+      container.style.padding = "18px";
+      container.style.background = "#ffffff";
+      container.style.boxSizing = "border-box";
+
+      const list = document.createElement("div");
+      list.style.display = "grid";
+      list.style.gap = "16px";
+      list.style.gridAutoRows = "minmax(440px, 440px)";
+      container.appendChild(list);
+
+      const tempCharts = [];
+      snapshot.charts.forEach((chartResult, index) => {
+        const wrap = document.createElement("div");
+        wrap.className = "rank-chart-canvas-wrap";
+        wrap.style.height = "440px";
+        wrap.style.minHeight = "440px";
+        const canvas = document.createElement("canvas");
+        canvas.width = this.config.imageExport.rankChartsWidth - 76;
+        canvas.height = 420;
+        wrap.appendChild(canvas);
+        list.appendChild(wrap);
+
+        const chart = new window.Chart(
+          canvas,
+          this.buildRankChartConfig({
+            labels: snapshot.labels,
+            chartResult,
+            index,
+            yAxisMax,
+            palette,
+            responsive: false,
+            maintainAspectRatio: false,
+            animation: false,
+          })
+        );
+        tempCharts.push(chart);
+      });
+
+      return { container, tempCharts };
     }
 
     buildRankChartDataFromInputs() {
@@ -2177,6 +2225,13 @@
     renderRankChart(result) {
       const palette = this.getExportPalette();
       const yAxisMax = this.calculateRankChartYAxisMax(result.charts);
+      this.state.rankChartLastResult = {
+        labels: [...result.labels],
+        charts: result.charts.map((item) => ({
+          kingdomId: item.kingdomId,
+          counts: [...item.counts],
+        })),
+      };
       for (const chart of this.state.rankCharts) {
         chart.destroy();
       }
@@ -2189,75 +2244,101 @@
         const canvas = document.createElement("canvas");
         wrap.appendChild(canvas);
         this.dom.rankChartCanvasList.appendChild(wrap);
-        const chart = new window.Chart(canvas, {
-          type: this.state.rankChartType,
-          data: {
+        const chart = new window.Chart(
+          canvas,
+          this.buildRankChartConfig({
             labels: result.labels,
-            datasets: [
-              {
-                label: this.t("rankChartDatasetLabel"),
-                data: chartResult.counts,
-                backgroundColor: this.rankChartColor(index, 0.72),
-                borderColor: this.rankChartColor(index, 1),
-                borderWidth: 1,
-                fill: this.state.rankChartType === "line" ? false : undefined,
-                tension: this.state.rankChartType === "line" ? 0.28 : undefined,
-              },
-            ],
-          },
-          options: {
+            chartResult,
+            index,
+            yAxisMax,
+            palette,
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false,
+            animation: true,
+          })
+        );
+        this.state.rankCharts.push(chart);
+      });
+    }
+
+    buildRankChartConfig({
+      labels,
+      chartResult,
+      index,
+      yAxisMax,
+      palette,
+      responsive,
+      maintainAspectRatio,
+      animation,
+    }) {
+      return {
+        type: this.state.rankChartType,
+        data: {
+          labels,
+          datasets: [
+            {
+              label: this.t("rankChartDatasetLabel"),
+              data: chartResult.counts,
+              backgroundColor: this.rankChartColor(index, 0.72),
+              borderColor: this.rankChartColor(index, 1),
+              borderWidth: 1,
+              fill: this.state.rankChartType === "line" ? false : undefined,
+              tension: this.state.rankChartType === "line" ? 0.28 : undefined,
+            },
+          ],
+        },
+        options: {
+          responsive,
+          maintainAspectRatio,
+          animation,
+          plugins: {
+            legend: {
+              display: false,
+            },
+            title: {
+              display: true,
+              text: `${this.t("rankChartTitle")} K${chartResult.kingdomId}`,
+              color: palette.strong,
+              font: {
+                size: 16,
+                weight: "700",
+              },
+            },
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: this.t("rankChartXAxis"),
+                color: palette.strong,
+              },
+              ticks: {
+                color: palette.strong,
+              },
+              grid: {
+                color: palette.border,
+              },
+            },
+            y: {
+              beginAtZero: true,
+              suggestedMax: yAxisMax,
+              max: yAxisMax,
+              ticks: {
+                precision: 0,
+                color: palette.text,
               },
               title: {
                 display: true,
-                text: `${this.t("rankChartTitle")} K${chartResult.kingdomId}`,
+                text: this.t("rankChartYAxis"),
                 color: palette.strong,
-                font: {
-                  size: 16,
-                  weight: "700",
-                },
               },
-            },
-            scales: {
-              x: {
-                title: {
-                  display: true,
-                  text: this.t("rankChartXAxis"),
-                  color: palette.strong,
-                },
-                ticks: {
-                  color: palette.strong,
-                },
-                grid: {
-                  color: palette.border,
-                },
-              },
-              y: {
-                beginAtZero: true,
-                suggestedMax: yAxisMax,
-                max: yAxisMax,
-                ticks: {
-                  precision: 0,
-                  color: palette.text,
-                },
-                title: {
-                  display: true,
-                  text: this.t("rankChartYAxis"),
-                  color: palette.strong,
-                },
-                grid: {
-                  color: palette.border,
-                },
+              grid: {
+                color: palette.border,
               },
             },
           },
-        });
-        this.state.rankCharts.push(chart);
-      });
+        },
+      };
     }
 
     calculateRankChartYAxisMax(charts) {
