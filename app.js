@@ -84,6 +84,13 @@
       candidateMin: 1000,
       candidateMax: 99999,
     },
+    imageExport: {
+      captureScale: 2,
+      tableSingleWidth: 1180,
+      tableSplitWidth: 1420,
+      rankChartsWidth: 1440,
+      rankChartsPadding: 20,
+    },
   };
 
   const TRANSLATIONS = {
@@ -2040,13 +2047,10 @@
       this.updateRankChartActionButtonsDisabledState();
       this.setRankChartStatus(this.t("rankChartExportPreparing"));
 
+      const container = this.createRankChartExportContainer();
+      document.body.appendChild(container);
       try {
-        const canvas = await window.html2canvas(this.dom.rankChartCanvasList, {
-          backgroundColor: "#ffffff",
-          useCORS: true,
-          logging: false,
-          scale: Math.max(1.5, window.devicePixelRatio || 1),
-        });
+        const canvas = await this.renderElementToCanvas(container);
         const blob = await this.canvasToBlob(canvas);
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -2062,9 +2066,27 @@
         const message = String(error && error.message ? error.message : this.t("unknownError"));
         this.setRankChartStatus(this.t("rankChartExportFailed", { message }), true);
       } finally {
+        container.remove();
         this.state.exportingRankChartsImage = false;
         this.updateRankChartActionButtonsDisabledState();
       }
+    }
+
+    createRankChartExportContainer() {
+      const wrapper = document.createElement("div");
+      wrapper.style.position = "fixed";
+      wrapper.style.left = "-100000px";
+      wrapper.style.top = "0";
+      wrapper.style.width = `${this.config.imageExport.rankChartsWidth}px`;
+      wrapper.style.padding = `${this.config.imageExport.rankChartsPadding}px`;
+      wrapper.style.background = "#ffffff";
+      wrapper.style.boxSizing = "border-box";
+
+      const clonedList = this.dom.rankChartCanvasList.cloneNode(true);
+      clonedList.style.width = "100%";
+      clonedList.style.display = "grid";
+      wrapper.appendChild(clonedList);
+      return wrapper;
     }
 
     buildRankChartDataFromInputs() {
@@ -2651,12 +2673,7 @@
       document.body.appendChild(container);
 
       try {
-        const canvas = await window.html2canvas(container, {
-          backgroundColor: "#ffffff",
-          useCORS: true,
-          logging: false,
-          scale: Math.max(1.5, window.devicePixelRatio || 1),
-        });
+        const canvas = await this.renderElementToCanvas(container);
         const blob = await this.canvasToBlob(canvas);
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -2686,7 +2703,9 @@
       wrapper.style.position = "fixed";
       wrapper.style.left = "-100000px";
       wrapper.style.top = "0";
-      wrapper.style.width = `${useSplitLayout ? 1420 : Math.max(this.dom.resultTable.offsetWidth, 980)}px`;
+      wrapper.style.width = `${useSplitLayout
+        ? this.config.imageExport.tableSplitWidth
+        : this.config.imageExport.tableSingleWidth}px`;
       wrapper.style.padding = "32px";
       wrapper.style.background = `linear-gradient(135deg, ${palette.background} 0%, ${palette.backgroundAccent} 100%)`;
       wrapper.style.border = `1px solid ${palette.border}`;
@@ -2748,6 +2767,15 @@
       wrapper.appendChild(hero);
       wrapper.appendChild(tableLayout);
       return wrapper;
+    }
+
+    renderElementToCanvas(element) {
+      return window.html2canvas(element, {
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+        scale: this.config.imageExport.captureScale,
+      });
     }
 
     getExportRows() {

@@ -139,6 +139,7 @@
 - The ranking distribution page includes a button to save all currently displayed charts as one PNG image via html2canvas.
 - Both the search page and ranking distribution page include a shared floating `先頭へ戻る` button (up-arrow icon) that appears after scrolling down and smoothly returns to the top when clicked.
 - Exported images use a decorated summary-card layout; when the current page has 20 or more rows, the exported image splits the table into left/right columns for easier scanning.
+- Image export rendering uses fixed capture scale and fixed export widths, so output resolution/clarity is consistent regardless of the current display size or browser zoom.
 - Exported image summary chips include the power used for the currently displayed fetched data.
 - Result table stays inside the result column with horizontal scrolling when the available width is narrower than the table minimum.
 - Result table headers support client-side sorting for `王国番号`, `必要巻物`, `王国状態`, and `ランク`; sorting is applied to the full filtered result set before pagination.
