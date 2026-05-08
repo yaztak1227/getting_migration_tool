@@ -89,7 +89,6 @@
       tableSingleWidth: 1180,
       tableSplitWidth: 1420,
       rankChartsWidth: 1440,
-      rankChartsPadding: 20,
     },
   };
 
@@ -2047,10 +2046,20 @@
       this.updateRankChartActionButtonsDisabledState();
       this.setRankChartStatus(this.t("rankChartExportPreparing"));
 
-      const container = this.createRankChartExportContainer();
-      document.body.appendChild(container);
+      const list = this.dom.rankChartCanvasList;
+      const wraps = [...list.querySelectorAll(".rank-chart-canvas-wrap")];
+      const previousListStyle = {
+        width: list.style.width,
+      };
+      const previousWrapStyles = wraps.map((wrap) => ({
+        minHeight: wrap.style.minHeight,
+      }));
       try {
-        const canvas = await this.renderElementToCanvas(container);
+        list.style.width = `${this.config.imageExport.rankChartsWidth}px`;
+        for (const wrap of wraps) {
+          wrap.style.minHeight = "18rem";
+        }
+        const canvas = await this.renderElementToCanvas(list);
         const blob = await this.canvasToBlob(canvas);
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -2066,27 +2075,13 @@
         const message = String(error && error.message ? error.message : this.t("unknownError"));
         this.setRankChartStatus(this.t("rankChartExportFailed", { message }), true);
       } finally {
-        container.remove();
+        list.style.width = previousListStyle.width;
+        wraps.forEach((wrap, index) => {
+          wrap.style.minHeight = previousWrapStyles[index].minHeight;
+        });
         this.state.exportingRankChartsImage = false;
         this.updateRankChartActionButtonsDisabledState();
       }
-    }
-
-    createRankChartExportContainer() {
-      const wrapper = document.createElement("div");
-      wrapper.style.position = "fixed";
-      wrapper.style.left = "-100000px";
-      wrapper.style.top = "0";
-      wrapper.style.width = `${this.config.imageExport.rankChartsWidth}px`;
-      wrapper.style.padding = `${this.config.imageExport.rankChartsPadding}px`;
-      wrapper.style.background = "#ffffff";
-      wrapper.style.boxSizing = "border-box";
-
-      const clonedList = this.dom.rankChartCanvasList.cloneNode(true);
-      clonedList.style.width = "100%";
-      clonedList.style.display = "grid";
-      wrapper.appendChild(clonedList);
-      return wrapper;
     }
 
     buildRankChartDataFromInputs() {
