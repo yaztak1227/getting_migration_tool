@@ -156,7 +156,7 @@
 - Browser OCR behavior is inspired by `ogwata/ndlocr-lite-web-ai`, but implemented in this project without a build step.
 - OCR runs client-side through CDN-loaded `tesseract.js`.
 - First OCR preparation downloads language/model assets in the browser cache.
-- OCR candidate extraction targets 4-5 digit numbers.
+- OCR candidate extraction targets 4-5 digit numbers. When OCR drops spaces and returns one continuous digit run whose length is a multiple of 4, the run is split into 4-digit kingdom candidates before validation.
 - 5-digit candidates are resolved to either the leading 4 digits or trailing 4 digits, choosing the side closer to neighboring accepted candidates; when only one side of context exists, that side is used as the hint.
 
 ## Constraints

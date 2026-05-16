@@ -10,6 +10,53 @@ const expectedKingdomList =
   "1162 1165 1171 1173 1202 1205 1208 1221 1222 1236 1245 1255 1265 1306 1320 1355 1357 1368 1399 1400 1412 1430 1459 1460 1462";
 
 test.describe("OCR helper", () => {
+  test("splits OCR digit runs whose length is a multiple of 4 into kingdom candidates", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("lm_language_v1", "ja");
+    });
+
+    await page.goto("/");
+    await page.evaluate(() => {
+      window.Tesseract = {
+        PSM: { AUTO: "auto" },
+        createWorker: async () => ({
+          setParameters: async () => {},
+          recognize: async () => ({
+            data: {
+              text: "1162116511711173 12025",
+            },
+          }),
+        }),
+      };
+    });
+
+    await page.evaluate(() => {
+      const filterPanel = document.getElementById("filterPanel");
+      if (filterPanel) {
+        filterPanel.hidden = false;
+        filterPanel.open = true;
+      }
+      const ocrDetails = document.getElementById("ocrDetails");
+      if (ocrDetails) {
+        ocrDetails.open = true;
+      }
+    });
+
+    await page.locator("#ocrPrepareButton").click();
+    await page.locator("#ocrImageInput").setInputFiles(referenceImagePath);
+    await page.locator("#ocrRunButton").click();
+    await expect(page.locator("#ocrStatus .message-body")).toHaveText(
+      "OCRが完了しました。1枚分の結果をまとめています。"
+    );
+
+    await page.locator("#ocrApplyButton").click();
+    await expect(page.locator("#kingdomRangeListInput")).toHaveValue(
+      "1162 1165 1171 1173 1202"
+    );
+  });
+
   test("applies the expected kingdom list from the reference image", async ({ page }) => {
     test.setTimeout(180000);
 

@@ -219,7 +219,7 @@
       ocrDetectedSummary: "抽出王国番号: {candidates}",
       ocrDetectedNone: "抽出王国番号: 見つかりませんでした",
       ocrDetectedDescription:
-        "{count}枚のOCR結果から 4〜5桁の数字を候補として抽出し、5桁は前後の候補関係を見ながら近い4桁側へ補正しました。内容を確認してから反映してください。",
+        "{count}枚のOCR結果から 4〜5桁の数字を候補として抽出します。スペース欠落で4の倍数桁になった数字は4桁ずつに分割し、5桁は前後の候補関係を見ながら近い4桁側へ補正しました。内容を確認してから反映してください。",
       ocrDetectedDescriptionNone:
         "OCRテキストは取得できましたが、王国番号らしい4〜5桁の候補は見つかりませんでした。",
       ocrDone: "OCRが完了しました。{count}枚分の結果をまとめています。",
@@ -395,7 +395,7 @@
       ocrDetectedSummary: "Detected Kingdom IDs: {candidates}",
       ocrDetectedNone: "Detected Kingdom IDs: none",
       ocrDetectedDescription:
-        "Extracted 4-5 digit number candidates from {count} OCR result images, and corrected each 5-digit value to the closer 4-digit side using neighboring candidates. Verify before applying.",
+        "Extracted 4-5 digit number candidates from {count} OCR result images. Numbers packed into a multiple of 4 digits by missing spaces are split into 4-digit chunks, and each 5-digit value is corrected to the closer 4-digit side using neighboring candidates. Verify before applying.",
       ocrDetectedDescriptionNone:
         "OCR text was extracted, but no 4-5 digit kingdom-like candidates were found.",
       ocrDone: "OCR complete. Aggregated results from {count} images.",
@@ -2465,7 +2465,7 @@
     }
 
     extractKingdomCandidates(text, previousCandidate = null) {
-      const matches = String(text || "").match(/\d{4,5}/g) || [];
+      const matches = this.extractKingdomCandidateTokens(text);
       const values = [];
       let priorValue = Number.isFinite(previousCandidate) ? previousCandidate : null;
       for (let index = 0; index < matches.length; index += 1) {
@@ -2478,6 +2478,26 @@
       }
 
       return [...new Set(values)];
+    }
+
+    extractKingdomCandidateTokens(text) {
+      const digitRuns = String(text || "").match(/\d{4,}/g) || [];
+      const tokens = [];
+
+      for (const run of digitRuns) {
+        if (run.length === 4 || run.length === 5) {
+          tokens.push(run);
+          continue;
+        }
+
+        if (run.length % 4 === 0) {
+          for (let offset = 0; offset < run.length; offset += 4) {
+            tokens.push(run.slice(offset, offset + 4));
+          }
+        }
+      }
+
+      return tokens;
     }
 
     normalizeKingdomCandidate(token, previousCandidate = null, nextCandidateHint = null) {
