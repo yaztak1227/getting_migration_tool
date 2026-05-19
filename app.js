@@ -89,6 +89,7 @@
       tableSingleWidth: 1180,
       tableSplitWidth: 1420,
       rankChartsWidth: 1440,
+      rankChartsPerZipImage: 5,
     },
   };
 
@@ -172,19 +173,19 @@
       rankChartRender: "グラフを作成",
       rankChartTypeButtonLine: "折れ線グラフに切替",
       rankChartTypeButtonBar: "棒グラフに切替",
-      rankChartExportImage: "グラフを1枚の画像に保存",
+      rankChartExportImage: "グラフ画像を保存",
       rankChartBack: "フィルタ画面へ戻る",
       scrollTop: "先頭へ戻る",
       rankChartNoCachedPowers: "キャッシュ済みデータがありません。先に取得してください。",
       rankChartInvalidSelection: "キャッシュ済みリストを複数選択するか、パワー範囲を入力してください。",
       rankChartInvalidKingdom: "王国番号を1件以上入力してください。",
       rankChartLibraryMissing: "Chart.js の読み込みに失敗しました。ネットワーク接続を確認して再読み込みしてください。",
-      rankChartExportLibraryMissing: "html2canvas の読み込みに失敗しました。ネットワーク接続を確認して再読み込みしてください。",
+      rankChartExportLibraryMissing: "html2canvas または JSZip の読み込みに失敗しました。ネットワーク接続を確認して再読み込みしてください。",
       rankChartNoData: "指定条件でプロットできるランキング分布がありません。",
       rankChartRendered: "{kingdom} のランキング分布を表示しました。",
       rankChartExportNoCharts: "画像に保存するグラフがありません。",
       rankChartExportPreparing: "グラフ画像を準備しています...",
-      rankChartExportDone: "グラフを1枚の画像として保存しました。",
+      rankChartExportDone: "グラフ画像を保存しました。",
       rankChartExportFailed: "グラフ画像の保存に失敗しました: {message}",
       rankChartRefreshSelectRequired: "再取得するキャッシュ済みリストを1件以上選択してください。",
       rankChartRefreshLoading: "選択したキャッシュ済みリストを再取得しています... ({index}/{count})",
@@ -348,19 +349,19 @@
       rankChartRender: "Create Chart",
       rankChartTypeButtonLine: "Switch to Line Chart",
       rankChartTypeButtonBar: "Switch to Bar Chart",
-      rankChartExportImage: "Save Charts as One Image",
+      rankChartExportImage: "Save Chart Images",
       rankChartBack: "Back to Filters",
       scrollTop: "Back to Top",
       rankChartNoCachedPowers: "No cached data exists. Fetch data first.",
       rankChartInvalidSelection: "Select multiple cached lists or enter a power range.",
       rankChartInvalidKingdom: "Enter at least one kingdom ID.",
       rankChartLibraryMissing: "Chart.js failed to load. Check your network connection and reload.",
-      rankChartExportLibraryMissing: "html2canvas failed to load. Check your network connection and reload.",
+      rankChartExportLibraryMissing: "html2canvas or JSZip failed to load. Check your network connection and reload.",
       rankChartNoData: "No rank distribution can be plotted for the selected conditions.",
       rankChartRendered: "Displayed rank distribution for {kingdom}.",
       rankChartExportNoCharts: "There are no charts to save as an image.",
       rankChartExportPreparing: "Preparing chart image...",
-      rankChartExportDone: "Saved the charts as one image.",
+      rankChartExportDone: "Saved the chart image(s).",
       rankChartExportFailed: "Failed to save chart image: {message}",
       rankChartRefreshSelectRequired: "Select at least one cached list to refresh.",
       rankChartRefreshLoading: "Refreshing selected cached lists... ({index}/{count})",
@@ -2084,37 +2085,93 @@
         return;
       }
 
-      const { container, tempCharts } = this.createVirtualRankChartExportContainer(snapshot);
-      document.body.appendChild(container);
       try {
-        const canvas = await this.renderElementToCanvas(container);
-        const blob = await this.canvasToBlob(canvas);
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = this.buildRankChartExportFileName();
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
+        if (snapshot.charts.length >= this.config.imageExport.rankChartsPerZipImage) {
+          if (typeof window.JSZip !== "function") {
+            this.setRankChartStatus(this.t("rankChartExportLibraryMissing"), true);
+            return;
+          }
+          await this.exportRankChartsZip(snapshot);
+        } else {
+          await this.exportRankChartsPng(snapshot);
+        }
         this.setRankChartStatus(this.t("rankChartExportDone"));
       } catch (error) {
         console.error(error);
         const message = String(error && error.message ? error.message : this.t("unknownError"));
         this.setRankChartStatus(this.t("rankChartExportFailed", { message }), true);
       } finally {
-        for (const chart of tempCharts) {
-          chart.destroy();
-        }
-        container.remove();
         this.state.exportingRankChartsImage = false;
         this.updateRankChartActionButtonsDisabledState();
       }
     }
 
-    createVirtualRankChartExportContainer(snapshot) {
+    async exportRankChartsPng(snapshot) {
+      const { container, tempCharts } = this.createVirtualRankChartExportContainer(snapshot);
+      document.body.appendChild(container);
+      try {
+        const canvas = await this.renderElementToCanvas(container);
+        const blob = await this.canvasToBlob(canvas);
+        this.downloadBlob(blob, this.buildRankChartExportFileName());
+      } finally {
+        this.destroyVirtualRankCharts(container, tempCharts);
+      }
+    }
+
+    async exportRankChartsZip(snapshot) {
+      const zip = new window.JSZip();
+      const chunks = this.chunkRankCharts(snapshot.charts);
+      for (let index = 0; index < chunks.length; index += 1) {
+        const charts = chunks[index];
+        const { container, tempCharts } = this.createVirtualRankChartExportContainer(snapshot, {
+          charts,
+          startIndex: index * this.config.imageExport.rankChartsPerZipImage,
+        });
+        document.body.appendChild(container);
+        try {
+          const canvas = await this.renderElementToCanvas(container);
+          const blob = await this.canvasToBlob(canvas);
+          zip.file(this.buildRankChartExportPartFileName(index + 1), blob);
+        } finally {
+          this.destroyVirtualRankCharts(container, tempCharts);
+        }
+      }
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      this.downloadBlob(zipBlob, this.buildRankChartExportZipFileName());
+    }
+
+    chunkRankCharts(charts) {
+      const chunkSize = this.config.imageExport.rankChartsPerZipImage;
+      const chunks = [];
+      for (let index = 0; index < charts.length; index += chunkSize) {
+        chunks.push(charts.slice(index, index + chunkSize));
+      }
+      return chunks;
+    }
+
+    destroyVirtualRankCharts(container, tempCharts) {
+      for (const chart of tempCharts) {
+        chart.destroy();
+      }
+      container.remove();
+    }
+
+    downloadBlob(blob, fileName) {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    }
+
+    createVirtualRankChartExportContainer(snapshot, options = {}) {
       const palette = this.getExportPalette();
       const yAxisMax = this.calculateRankChartYAxisMax(snapshot.charts);
+      const charts = options.charts || snapshot.charts;
+      const startIndex = Number.isFinite(options.startIndex) ? options.startIndex : 0;
       const container = document.createElement("div");
       container.style.position = "fixed";
       container.style.left = "-100000px";
@@ -2131,7 +2188,8 @@
       container.appendChild(list);
 
       const tempCharts = [];
-      snapshot.charts.forEach((chartResult, index) => {
+      charts.forEach((chartResult, localIndex) => {
+        const index = startIndex + localIndex;
         const wrap = document.createElement("div");
         wrap.className = "rank-chart-canvas-wrap";
         wrap.style.height = "440px";
@@ -2409,13 +2467,25 @@
     }
 
     buildRankChartExportFileName() {
+      return `${this.buildRankChartExportBaseFileName()}.png`;
+    }
+
+    buildRankChartExportZipFileName() {
+      return `${this.buildRankChartExportBaseFileName()}.zip`;
+    }
+
+    buildRankChartExportPartFileName(partNumber) {
+      return `${this.buildRankChartExportBaseFileName()}-part-${String(partNumber).padStart(2, "0")}.png`;
+    }
+
+    buildRankChartExportBaseFileName() {
       const now = new Date();
       const yyyy = String(now.getFullYear()).padStart(4, "0");
       const mm = String(now.getMonth() + 1).padStart(2, "0");
       const dd = String(now.getDate()).padStart(2, "0");
       const hh = String(now.getHours()).padStart(2, "0");
       const mi = String(now.getMinutes()).padStart(2, "0");
-      return `ranking-charts-${this.state.rankChartType}-${yyyy}${mm}${dd}-${hh}${mi}.png`;
+      return `ranking-charts-${this.state.rankChartType}-${yyyy}${mm}${dd}-${hh}${mi}`;
     }
 
     updateRankChartUrl(powerSpec, kingdomIds) {

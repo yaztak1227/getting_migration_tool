@@ -246,6 +246,99 @@ test.describe("ranking page", () => {
     expect(path).toBe("/ranking/1.0B 1.1B/1780,1805,1910,2040,2110");
   });
 
+  test("exports five or more ranking charts as zipped image batches", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => {
+      const kingdomRows = [
+        { kingdomId: 1780, rank: 10, num: 90, status: 1 },
+        { kingdomId: 1805, rank: 20, num: 90, status: 1 },
+        { kingdomId: 1910, rank: 30, num: 90, status: 1 },
+        { kingdomId: 2040, rank: 40, num: 90, status: 1 },
+        { kingdomId: 2110, rank: 50, num: 90, status: 1 },
+        { kingdomId: 2220, rank: 60, num: 90, status: 1 },
+      ];
+      const store = {
+        items: {
+          1000: buildCacheForBrowser(1000, kingdomRows),
+          1100: buildCacheForBrowser(
+            1100,
+            kingdomRows.map((row, index) => ({ ...row, rank: row.rank + index + 1 }))
+          ),
+        },
+      };
+      localStorage.setItem("lm_migration_cache_store_v1", JSON.stringify(store));
+
+      function buildCacheForBrowser(power, kingdomList) {
+        return {
+          requestedAt: new Date().toISOString(),
+          requestPlan: {
+            power,
+            num: 90,
+            status: 0,
+            order: 1,
+            url: "/api/migration",
+            method: "POST",
+          },
+          requestPayload: {
+            power,
+            num: 90,
+            status: 0,
+            order: 1,
+          },
+          kingdomList,
+        };
+      }
+    });
+
+    await page.goto("/ranking/1.0-1.1B/1780,1805,1910,2040,2110,2220");
+    await expect(page.locator(".rank-chart-canvas-wrap")).toHaveCount(6);
+
+    await page.evaluate(() => {
+      window.__rankChartExport = {
+        batchSizes: [],
+        files: [],
+        download: null,
+      };
+      window.html2canvas = async (element) => {
+        window.__rankChartExport.batchSizes.push(element.querySelectorAll("canvas").length);
+        return {
+          toBlob(callback) {
+            callback(new Blob(["png"], { type: "image/png" }));
+          },
+        };
+      };
+      window.JSZip = class FakeJSZip {
+        file(name, blob) {
+          window.__rankChartExport.files.push({ name, type: blob.type });
+        }
+
+        async generateAsync(options) {
+          return new Blob([JSON.stringify(options)], { type: "application/zip" });
+        }
+      };
+      window.URL.createObjectURL = (blob) => {
+        window.__rankChartExport.download = { type: blob.type };
+        return "blob:rank-charts";
+      };
+      window.URL.revokeObjectURL = () => {};
+      HTMLAnchorElement.prototype.click = function click() {
+        window.__rankChartExport.download.name = this.download;
+      };
+    });
+
+    await page.locator("#exportRankChartsImageButton").click();
+
+    await expect(page.locator("#rankChartStatus")).toContainText("Saved the chart image(s).");
+    const exportResult = await page.evaluate(() => window.__rankChartExport);
+    expect(exportResult.batchSizes).toEqual([5, 1]);
+    expect(exportResult.files.map((file) => file.name)).toEqual([
+      expect.stringMatching(/ranking-charts-bar-\d{8}-\d{4}-part-01\.png/),
+      expect.stringMatching(/ranking-charts-bar-\d{8}-\d{4}-part-02\.png/),
+    ]);
+    expect(exportResult.download.name).toMatch(/ranking-charts-bar-\d{8}-\d{4}\.zip/);
+    expect(exportResult.download.type).toBe("application/zip");
+  });
+
   test("restores power and kingdom chart inputs from query parameters", async ({ page }) => {
     await page.goto("/ranking?power=1.0-1.2B&kingdom=1780%2C1805");
 

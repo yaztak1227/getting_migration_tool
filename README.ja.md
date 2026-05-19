@@ -125,6 +125,7 @@ http://127.0.0.1:6080
 | fuzzysort | 3.1.0 | クライアント側あいまい検索 | MIT | [farzher/fuzzysort](https://github.com/farzher/fuzzysort) |
 | Tesseract.js | 6.x | OCR 実行 | Apache-2.0 | [naptha/tesseract.js](https://github.com/naptha/tesseract.js) |
 | html2canvas | 1.4.1 | 表示中テーブルの画像出力 | MIT | [niklasvh/html2canvas](https://github.com/niklasvh/html2canvas) |
+| JSZip | 3.10.1 | 複数グラフ画像のZIP出力 | MIT or GPL-3.0 | [Stuk/jszip](https://github.com/Stuk/jszip) |
 
 ## ライセンス
 
