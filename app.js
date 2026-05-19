@@ -1842,8 +1842,37 @@
     }
 
     navigateToRankChartPage() {
-      window.history.pushState(null, "", "/ranking");
+      this.syncFiltersFromUI();
+      const powerSpec = this.buildRankChartPowerSpecFromSearch();
+      const kingdomSpec = this.buildRankChartKingdomSpecFromSearch();
+      const path = this.buildRankingPath(powerSpec, kingdomSpec);
+      window.history.pushState(null, "", path);
       this.syncPageFromUrl();
+    }
+
+    buildRankChartPowerSpecFromSearch() {
+      const rawPower = this.dom.powerSelect.value.trim();
+      const rangePowers = parsePowerRangeInput(rawPower);
+      if (rangePowers && rangePowers.length > 1) return rawPower;
+
+      const cachedPowers = this.readCachedPowerValues().sort((a, b) => a - b);
+      if (cachedPowers.length > 1) {
+        return cachedPowers.map((value) => formatPowerInputValue(value)).join(",");
+      }
+
+      return rawPower;
+    }
+
+    buildRankChartKingdomSpecFromSearch() {
+      const rawKingdoms = this.dom.kingdomRangeListInput.value.trim();
+      const kingdomIds = parseKingdomIdsInput(rawKingdoms);
+      if (kingdomIds.length > 0) return kingdomIds.join(",");
+
+      if (rawKingdoms && this.state.filteredList.length > 0) {
+        return this.state.filteredList.map((row) => row.kingdomId).join(",");
+      }
+
+      return "";
     }
 
     navigateToSearchPage() {

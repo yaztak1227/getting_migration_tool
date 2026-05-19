@@ -191,6 +191,61 @@ test.describe("ranking page", () => {
     expect(yAxisMaxes).toEqual([56, 56, 56, 56, 56]);
   });
 
+  test("carries more than four kingdom IDs from the search page into the ranking URL", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => {
+      const kingdomRows = [
+        { kingdomId: 1780, rank: 10, num: 90, status: 1 },
+        { kingdomId: 1805, rank: 20, num: 90, status: 1 },
+        { kingdomId: 1910, rank: 30, num: 90, status: 1 },
+        { kingdomId: 2040, rank: 40, num: 90, status: 1 },
+        { kingdomId: 2110, rank: 50, num: 90, status: 1 },
+      ];
+      const nextRows = kingdomRows.map((row, index) => ({
+        ...row,
+        rank: row.rank + index + 1,
+      }));
+      const store = {
+        items: {
+          1000: buildCacheForBrowser(1000, kingdomRows),
+          1100: buildCacheForBrowser(1100, nextRows),
+        },
+      };
+      localStorage.setItem("lm_migration_cache_store_v1", JSON.stringify(store));
+
+      function buildCacheForBrowser(power, kingdomList) {
+        return {
+          requestedAt: new Date().toISOString(),
+          requestPlan: {
+            power,
+            num: 90,
+            status: 0,
+            order: 1,
+            url: "/api/migration",
+            method: "POST",
+          },
+          requestPayload: {
+            power,
+            num: 90,
+            status: 0,
+            order: 1,
+          },
+          kingdomList,
+        };
+      }
+    });
+    await page.reload();
+
+    await page.locator("#powerSelect").fill("1.0B 1.1B");
+    await page.locator("#kingdomRangeListInput").fill("1780 1805 1910 2040 2110");
+    await page.locator("#openRankChartButton").click();
+
+    await expect(page.locator("#rankChartKingdomInput")).toHaveValue("1780,1805,1910,2040,2110");
+    await expect(page.locator(".rank-chart-canvas-wrap")).toHaveCount(5);
+    const path = await page.evaluate(() => decodeURIComponent(window.location.pathname));
+    expect(path).toBe("/ranking/1.0B 1.1B/1780,1805,1910,2040,2110");
+  });
+
   test("restores power and kingdom chart inputs from query parameters", async ({ page }) => {
     await page.goto("/ranking?power=1.0-1.2B&kingdom=1780%2C1805");
 

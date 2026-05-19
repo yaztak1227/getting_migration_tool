@@ -124,7 +124,7 @@
   - controls in the kingdom filter section stay within the section frame without horizontal overflow.
 - Result area is shown in the right column with pager, empty state, table, and cache info.
 - Result toolbar includes a button to export the currently displayed table page as a formatted PNG image.
-- Result toolbar includes a `グラフに表示` button that navigates to the ranking distribution page.
+- Result toolbar includes a `グラフに表示` button that navigates to the ranking distribution page with the current power selection and kingdom filter reflected in the ranking URL when available.
 - The ranking distribution page is shown when the URL path is `/ranking` or `/ranking/<power-selection>/<kingdom-ids>`. It also accepts query parameters such as `/ranking?power=1.0-2.0B&kingdom=1234,1235`.
 - The ranking distribution page keeps the same shared header as the search page, including language and theme controls.
 - The ranking distribution page header places an icon-only back-to-search action at the left edge, while chart type toggle and combined chart image export actions are icon-labeled buttons aligned to the right and wrapping on narrow screens.
