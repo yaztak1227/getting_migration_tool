@@ -167,7 +167,7 @@
       rankChartRefreshSelectedCache: "選択を再取得",
       rankChartPowerRange: "パワー範囲",
       rankChartPowerRangePlaceholder: "例: 1.0-2.0B または 1000M 1100M",
-      rankChartKingdom: "王国番号（最大3つ）",
+      rankChartKingdom: "王国番号（複数可）",
       rankChartKingdomPlaceholder: "例: 1234 1235 1236",
       rankChartRender: "グラフを作成",
       rankChartTypeButtonLine: "折れ線グラフに切替",
@@ -177,7 +177,7 @@
       scrollTop: "先頭へ戻る",
       rankChartNoCachedPowers: "キャッシュ済みデータがありません。先に取得してください。",
       rankChartInvalidSelection: "キャッシュ済みリストを複数選択するか、パワー範囲を入力してください。",
-      rankChartInvalidKingdom: "王国番号を1〜3件で入力してください。",
+      rankChartInvalidKingdom: "王国番号を1件以上入力してください。",
       rankChartLibraryMissing: "Chart.js の読み込みに失敗しました。ネットワーク接続を確認して再読み込みしてください。",
       rankChartExportLibraryMissing: "html2canvas の読み込みに失敗しました。ネットワーク接続を確認して再読み込みしてください。",
       rankChartNoData: "指定条件でプロットできるランキング分布がありません。",
@@ -343,7 +343,7 @@
       rankChartRefreshSelectedCache: "Refresh Selected",
       rankChartPowerRange: "Power Range",
       rankChartPowerRangePlaceholder: "Example: 1.0-2.0B or 1000M 1100M",
-      rankChartKingdom: "Kingdom IDs (up to 3)",
+      rankChartKingdom: "Kingdom IDs (multiple allowed)",
       rankChartKingdomPlaceholder: "Example: 1234 1235 1236",
       rankChartRender: "Create Chart",
       rankChartTypeButtonLine: "Switch to Line Chart",
@@ -353,7 +353,7 @@
       scrollTop: "Back to Top",
       rankChartNoCachedPowers: "No cached data exists. Fetch data first.",
       rankChartInvalidSelection: "Select multiple cached lists or enter a power range.",
-      rankChartInvalidKingdom: "Enter 1 to 3 kingdom IDs.",
+      rankChartInvalidKingdom: "Enter at least one kingdom ID.",
       rankChartLibraryMissing: "Chart.js failed to load. Check your network connection and reload.",
       rankChartExportLibraryMissing: "html2canvas failed to load. Check your network connection and reload.",
       rankChartNoData: "No rank distribution can be plotted for the selected conditions.",
@@ -2139,7 +2139,7 @@
       }
 
       const kingdomIds = parseKingdomIdsInput(this.dom.rankChartKingdomInput.value);
-      if (kingdomIds.length === 0 || kingdomIds.length > 3) {
+      if (kingdomIds.length === 0) {
         this.setRankChartStatus(this.t("rankChartInvalidKingdom"), true);
         return null;
       }
@@ -2355,6 +2355,11 @@
         this.getPrimaryRgb(),
         "219, 85, 62",
         "47, 133, 90",
+        "169, 104, 36",
+        "110, 92, 191",
+        "20, 132, 150",
+        "196, 82, 128",
+        "86, 102, 126",
       ];
       return `rgba(${colors[index % colors.length]}, ${alpha})`;
     }

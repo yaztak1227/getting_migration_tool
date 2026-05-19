@@ -84,7 +84,7 @@ test.describe("i18n locale switching", () => {
     await expect(page.locator("#rankChartTitle")).toHaveText("Distribution des rangs");
     await expect(page.locator("#rankChartCachedPowersLabel")).toHaveText("Listes en cache");
     await expect(page.locator("#rankChartPowerRangeLabel")).toHaveText("Plage de puissance");
-    await expect(page.locator("#rankChartKingdomLabel")).toHaveText("IDs de royaume (jusqu’à 3)");
+    await expect(page.locator("#rankChartKingdomLabel")).toHaveText("IDs de royaume (plusieurs autorisés)");
     await expect(page.locator("#renderRankChartButton")).toHaveText("Créer le graphique");
     await expect(page.locator("#rankChartTypeButton")).toContainText("Passer au graphique en courbe");
     await expect(page.locator("#exportRankChartsImageButton")).toContainText("Enregistrer les graphiques en une image");
