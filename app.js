@@ -3582,7 +3582,7 @@
       if (!Number.isFinite(value) || value <= 0) return [];
       values.push(value);
     }
-    return [...new Set(values)].slice(0, 4);
+    return [...new Set(values)];
   }
 
   function parsePowerNumberWithSuffix(numberText, suffix) {
