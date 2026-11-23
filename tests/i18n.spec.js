@@ -81,12 +81,13 @@ test.describe("i18n locale switching", () => {
     await page.goto("/ranking/1.0-1.1B/1780");
     await page.selectOption("#languageSelect", "fr");
 
-    await expect(page.locator("#rankChartTitle")).toHaveText("Distribution des rangs");
+    await expect(page.locator("#showRankDistributionButton")).toHaveText("Distribution des rangs");
     await expect(page.locator("#rankChartCachedPowersLabel")).toHaveText("Listes en cache");
     await expect(page.locator("#rankChartPowerRangeLabel")).toHaveText("Plage de puissance");
     await expect(page.locator("#rankChartKingdomLabel")).toHaveText("IDs de royaume (plusieurs autorisés)");
-    await expect(page.locator("#renderRankChartButton")).toHaveText("Créer le graphique");
-    await expect(page.locator("#rankChartTypeButton")).toContainText("Passer au graphique en courbe");
+    await expect(page.locator("#renderRankChartButton")).toHaveCount(0);
+    await expect(page.locator("#rankChartKingdomEntryInput")).toHaveAttribute("placeholder", "Ajouter des royaumes");
+    await expect(page.locator("#rankChartTabLine")).toHaveText("Courbe");
     await expect(page.locator("#exportRankChartsImageButton")).toContainText("Enregistrer les images des graphiques");
 
     await expect

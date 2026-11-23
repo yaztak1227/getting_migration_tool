@@ -11,6 +11,10 @@
 /playwright-report/
 playwright-*.png
 
+# local working notes and generated images/data
+/.planning/
+/output/
+
 # next.js
 /.next/
 /out/

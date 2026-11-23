@@ -59,7 +59,7 @@ function resolveStaticPath(pathname) {
   if (pathname.startsWith("/ranking/")) {
     const parts = pathname.split("/").filter(Boolean);
     const assetStart = parts.findIndex((part) =>
-      ["app.js", "styles.css", "locales", "assets"].includes(part)
+      ["app.js", "heatmap.js", "styles.css", "locales", "assets"].includes(part)
     );
     if (assetStart >= 0) {
       return `/${parts.slice(assetStart).join("/")}`;

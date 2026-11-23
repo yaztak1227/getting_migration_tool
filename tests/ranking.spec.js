@@ -74,7 +74,8 @@ test.describe("ranking page", () => {
     await expect(page.locator("#rankChartPowerRangeInput")).toHaveValue("1.0-1.2B");
     await expect(page.locator("#rankChartKingdomInput")).toHaveValue("1780,1805");
     await expect(page.locator(".rank-chart-canvas-wrap")).toHaveCount(2);
-    await expect(page.locator("#rankChartStatus")).toContainText("1780, 1805");
+    await expect(page.locator("#rankChartStatus")).toBeHidden();
+    await expect(page.locator("#renderRankChartButton")).toHaveCount(0);
   });
 
   test("switches rendered ranking charts between bar and line types", async ({ page }) => {
@@ -111,7 +112,7 @@ test.describe("ranking page", () => {
     });
 
     await page.goto("/ranking/1.0-1.1B/1780");
-    await expect(page.locator("#rankChartTypeButton")).toContainText("Line");
+    await expect(page.getByRole("tab", { name: "Bar", exact: true })).toHaveAttribute("aria-selected", "true");
 
     await expect
       .poll(() =>
@@ -122,8 +123,8 @@ test.describe("ranking page", () => {
       )
       .toBe("bar");
 
-    await page.locator("#rankChartTypeButton").click();
-    await expect(page.locator("#rankChartTypeButton")).toContainText("Bar");
+    await page.getByRole("tab", { name: "Line", exact: true }).click();
+    await expect(page.getByRole("tab", { name: "Line", exact: true })).toHaveAttribute("aria-selected", "true");
     await expect
       .poll(() =>
         page.evaluate(() => {
@@ -236,14 +237,15 @@ test.describe("ranking page", () => {
     });
     await page.reload();
 
+    await page.locator("#rankChartCacheOptionsSummary").click();
     await page.locator("#powerSelect").fill("1.0B 1.1B");
     await page.locator("#kingdomRangeListInput").fill("1780 1805 1910 2040 2110");
     await page.locator("#openRankChartButton").click();
 
     await expect(page.locator("#rankChartKingdomInput")).toHaveValue("1780,1805,1910,2040,2110");
     await expect(page.locator(".rank-chart-canvas-wrap")).toHaveCount(5);
-    const path = await page.evaluate(() => decodeURIComponent(window.location.pathname));
-    expect(path).toBe("/ranking/1.0B 1.1B/1780,1805,1910,2040,2110");
+    expect(new URL(page.url()).pathname).toBe('/ranking');
+    expect(new URL(page.url()).searchParams.get('kingdom')).toBe('1780,1805,1910,2040,2110');
   });
 
   test("exports five or more ranking charts as zipped image batches", async ({ page }) => {
